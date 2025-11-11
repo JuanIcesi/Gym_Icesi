@@ -1,12 +1,20 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
-<div class="card">
-	<h2>Ingresar</h2>
-	<form method="post">{% csrf_token %}
-		{{ form.as_p }}
-		<div>
-			<button type="submit">Entrar</button>
+<div class="auth-hero">
+	<div class="auth-visual" style="background-image: url('{% static 'img/login-hero.jpg' %}');" aria-hidden="true"></div>
+	<div class="auth-form">
+		<div class="card">
+			<h2>Welcome Back</h2>
+			<p class="muted">Ingresa a tu cuenta para continuar</p>
+			<form method="post">{% csrf_token %}
+				{{ form.as_p }}
+				<div>
+					<button type="submit" class="btn">Login</button>
+				</div>
+			</form>
+			<div class="muted" style="margin-top:0.5rem">¿No tienes cuenta? <a href="#">Regístrate</a></div>
 		</div>
-	</form>
+	</div>
 </div>
 {% endblock %}

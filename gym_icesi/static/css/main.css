@@ -60,3 +60,32 @@ th{background:#fbfdff;font-weight:600}
   .main-nav{width:100%;display:flex;flex-wrap:wrap;gap:0.5rem}
   .container{padding:0.75rem}
 }
+
+/* Login / Auth hero (split visual + form) */
+.auth-hero{
+  min-height:calc(100vh - 120px);
+  display:flex;
+  gap:2rem;
+  padding:2rem;
+  align-items:center;
+  justify-content:center;
+  background:#344b1f; /* outer green tone */
+}
+.auth-visual{
+  flex:1;
+  min-height:520px;
+  background-size:cover;
+  background-position:center;
+  border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.18);
+}
+.auth-form{width:420px}
+.auth-form .card{padding:2rem}
+.auth-form h2{margin-top:0}
+.auth-form .muted{color:var(--muted);margin-bottom:0.5rem}
+
+@media (max-width:900px){
+  .auth-hero{flex-direction:column;padding:1rem}
+  .auth-visual{width:100%;min-height:220px;margin-bottom:1rem}
+  .auth-form{width:100%}
+}
