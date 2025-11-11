@@ -5,12 +5,15 @@ Generado por 'django-admin startproject' (Django 5.2.8)
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv, find_dotenv  # 👈 para cargar las variables del .env
+from dotenv import load_dotenv  # 👈 necesario para leer el archivo .env
 
 # ----------------------------------------------------
 # Rutas base
 # ----------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Cargar variables desde el archivo .env (ubicado junto a manage.py)
+load_dotenv(BASE_DIR / ".env")
 
 # ----------------------------------------------------
 # Carga de variables de entorno (.env)
@@ -68,6 +71,7 @@ ROOT_URLCONF = 'gymsid.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],  # carpeta global
         'DIRS': [BASE_DIR / 'templates'],  # carpeta global de templates
         'APP_DIRS': True,
         'OPTIONS': {
@@ -84,6 +88,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'gymsid.wsgi.application'
 
 # ----------------------------------------------------
+# Base de datos (lee datos desde .env)
 # Base de datos (usa variables del .env)
 # ----------------------------------------------------
 DATABASES = {
@@ -94,8 +99,13 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASS', ''),
         'HOST': os.getenv('DB_HOST', ''),
         'PORT': os.getenv('DB_PORT', ''),
+        'OPTIONS': {
+            # fuerza cliente en UTF-8 (psycopg/psycopg2)
+            'options': '-c client_encoding=UTF8',
+        },
     }
 }
+
 
 # ----------------------------------------------------
 # Validación de contraseñas
