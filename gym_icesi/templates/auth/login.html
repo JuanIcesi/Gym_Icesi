@@ -1,5 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Ingresar</h2>
-<form method="post">{% csrf_token %}{{ form.as_p }}<button>Entrar</button></form>
+<div class="card">
+	<h2>Ingresar</h2>
+	<form method="post">{% csrf_token %}
+		{{ form.as_p }}
+		<div>
+			<button type="submit">Entrar</button>
+		</div>
+	</form>
+</div>
 {% endblock %}
