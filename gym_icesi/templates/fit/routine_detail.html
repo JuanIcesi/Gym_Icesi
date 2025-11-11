@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block content %}
+<h2>{{ routine.nombre }}</h2>
+{% if routine.user_id == user.id %}
+<p><a href="{% url 'routine_add_item' routine.pk %}">Añadir ejercicio</a></p>
+{% endif %}
+<ol>
+  {% for it in items %}
+    <li>{{ it.exercise.nombre }} — {{ it.series|default:"-" }}x{{ it.reps|default:"-" }} {% if it.tiempo_seg %}({{ it.tiempo_seg }}s){% endif %} {{ it.notas }}</li>
+  {% empty %}<li>Sin ejercicios</li>{% endfor %}
+</ol>
+{% endblock %}

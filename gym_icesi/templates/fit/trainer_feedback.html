@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block content %}
+<h2>Seguimiento a {{ tuser.username }}</h2>
+<h3>Progreso reciente</h3>
+<ul>{% for p in progress %}<li>{{ p.fecha }} – {{ p.routine.nombre }} (Esfuerzo {{ p.esfuerzo }})</li>{% empty %}<li>Sin registros</li>{% endfor %}</ul>
+<h3>Rutinas</h3>
+<ul>{% for r in routines %}<li>{{ r.nombre }}</li>{% empty %}<li>Sin rutinas</li>{% endfor %}</ul>
+{% endblock %}

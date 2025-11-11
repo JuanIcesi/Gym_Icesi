@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block content %}
+<h2>Mis rutinas</h2>
+<p><a href="{% url 'routine_create' %}">Nueva rutina</a></p>
+<ul>{% for r in routines %}<li><a href="{% url 'routine_detail' r.pk %}">{{ r.nombre }}</a></li>{% empty %}<li>Sin rutinas</li>{% endfor %}</ul>
+<h3>Prediseñadas</h3>
+<ul>{% for r in presets %}<li>{{ r.nombre }} — <a href="{% url 'routine_adopt' r.pk %}">Adoptar</a></li>{% empty %}<li>No hay</li>{% endfor %}</ul>
+{% endblock %}

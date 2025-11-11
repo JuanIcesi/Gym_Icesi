@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% block content %}
+<h2>Asignados</h2>
+<ul>{% for a in asignados %}<li><a href="{% url 'trainer_feedback' a.user.id %}">{{ a.user.username }}</a></li>{% empty %}<li>Sin asignados</li>{% endfor %}</ul>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block content %}
+<h2>Carga y balance</h2>
+<table>
+  <thead><tr><th>Tipo</th><th>Total reps</th><th>Total tiempo (s)</th></tr></thead>
+  <tbody>
+  {% for r in agg %}
+    <tr><td>{{ r.routine__items__exercise__tipo }}</td><td>{{ r.total_reps|default:0 }}</td><td>{{ r.total_tiempo|default:0 }}</td></tr>
+  {% empty %}<tr><td colspan="3">Sin datos</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

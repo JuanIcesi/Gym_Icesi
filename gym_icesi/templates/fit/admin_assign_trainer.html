@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% block content %}
+<h2>Asignar entrenador</h2>
+<form method="post">{% csrf_token %}
+  <label>Usuario</label>
+  <select name="user_id">{% for u in users %}<option value="{{u.id}}">{{u.username}}</option>{% endfor %}</select>
+  <label>Entrenador</label>
+  <select name="trainer_id">{% for t in trainers %}<option value="{{t.id}}">{{t.username}}</option>{% endfor %}</select>
+  <button>Guardar</button>
+</form>
+{% endblock %}
