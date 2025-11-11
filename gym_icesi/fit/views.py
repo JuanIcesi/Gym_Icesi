@@ -10,9 +10,43 @@ from .forms import RoutineForm, RoutineItemForm, ProgressForm
 
 @login_required
 def home(request):
-    latest = ProgressLog.objects.filter(user=request.user).order_by('-fecha')[:5]
-    my_routines = Routine.objects.filter(user=request.user).order_by('-fecha_creacion')[:5]
-    return render(request, 'fit/home.html', {'latest': latest, 'my_routines': my_routines})
+    user = request.user
+
+    # Obtener últimas sesiones y rutinas
+    latest = ProgressLog.objects.filter(user=user).order_by('-fecha')[:5]
+    my_routines = Routine.objects.filter(user=user).order_by('-fecha_creacion')[:5]
+
+    # Estadísticas generales
+    total_routines = Routine.objects.filter(user=user).count()
+    total_sessions = ProgressLog.objects.filter(user=user).count()
+
+    # Estadísticas del mes actual
+    today = date.today()
+    current_month_sessions = ProgressLog.objects.filter(
+        user=user,
+        fecha__year=today.year,
+        fecha__month=today.month
+    )
+    monthly_count = current_month_sessions.count()
+
+    # Días activos este mes
+    active_days = current_month_sessions.values('fecha').distinct().count()
+
+    # Esfuerzo promedio
+    avg_effort = current_month_sessions.aggregate(avg=Sum('esfuerzo'))['avg'] or 0
+    if monthly_count > 0:
+        avg_effort = round(avg_effort / monthly_count, 1)
+
+    context = {
+        'latest': latest,
+        'my_routines': my_routines,
+        'total_routines': total_routines,
+        'total_sessions': total_sessions,
+        'monthly_count': monthly_count,
+        'active_days': active_days,
+        'avg_effort': avg_effort,
+    }
+    return render(request, 'fit/home.html', context)
 
 @login_required
 def routine_list(request):

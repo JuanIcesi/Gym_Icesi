@@ -1,4 +1,48 @@
-{% extends 'base.html' %}{% block content %}
-<h2>Nueva rutina</h2>
-<form method="post">{% csrf_token %}{{ form.as_p }}<button>Guardar</button></form>
+{% extends 'base.html' %}
+{% block title %}Nueva Rutina - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'routine_list' %}" class="action-link">← Volver a rutinas</a>
+</div>
+
+<div class="card" style="max-width:600px;margin:0 auto;">
+  <h2>📋 Crear Nueva Rutina</h2>
+  <p style="color:var(--muted);margin-bottom:1.5rem;">
+    Dale un nombre descriptivo a tu rutina. Luego podrás agregar ejercicios específicos.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <label for="id_nombre">Nombre de la Rutina</label>
+    {{ form.nombre }}
+
+    {% if form.nombre.help_text %}
+      <p style="font-size:0.9rem;color:var(--muted);margin-top:0.25rem;">
+        {{ form.nombre.help_text }}
+      </p>
+    {% endif %}
+
+    {% if form.nombre.errors %}
+      <div style="background:#fee2e2;color:#991b1b;padding:0.75rem;border-radius:8px;margin-top:0.5rem;">
+        {{ form.nombre.errors }}
+      </div>
+    {% endif %}
+
+    <div style="display:flex;gap:1rem;margin-top:2rem;">
+      <button type="submit" class="btn btn-success" style="flex:1;">✓ Crear Rutina</button>
+      <a href="{% url 'routine_list' %}" class="btn" style="background:#e5e7eb;color:#374151;flex:1;text-align:center;">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<!-- Info Card -->
+<div class="card" style="max-width:600px;margin:2rem auto 0;background:#eff6ff;border-color:#dbeafe;">
+  <h3 style="color:#1e40af;">💡 Siguiente paso</h3>
+  <p style="color:#1e3a8a;margin-bottom:0;">
+    Una vez creada la rutina, podrás agregar ejercicios individuales con sus series,
+    repeticiones y tiempos específicos.
+  </p>
+</div>
 {% endblock %}

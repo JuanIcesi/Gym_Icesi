@@ -1,4 +1,106 @@
-{% extends 'base.html' %}{% block content %}
-<h2>Registrar progreso</h2>
-<form method="post">{% csrf_token %}{{ form.as_p }}<button>Guardar</button></form>
+{% extends 'base.html' %}
+{% block title %}Registrar Progreso - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'home' %}" class="action-link">← Volver al dashboard</a>
+</div>
+
+<div class="card" style="max-width:700px;margin:0 auto;">
+  <h2>✅ Registrar Progreso</h2>
+  <p style="color:var(--muted);margin-bottom:1.5rem;">
+    Registra tu sesión de entrenamiento para hacer seguimiento de tu evolución.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="row" style="gap:1rem;">
+      <div class="col">
+        <label for="id_routine">Rutina Realizada</label>
+        {{ form.routine }}
+        {% if form.routine.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.routine.errors }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="col">
+        <label for="id_fecha">Fecha</label>
+        {{ form.fecha }}
+        {% if form.fecha.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.fecha.errors }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="row" style="gap:1rem;">
+      <div class="col">
+        <label for="id_repeticiones">Repeticiones Totales</label>
+        {{ form.repeticiones }}
+        <p style="font-size:0.85rem;color:var(--muted);margin:0.25rem 0 0 0;">
+          Suma total de repeticiones realizadas
+        </p>
+        {% if form.repeticiones.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.repeticiones.errors }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="col">
+        <label for="id_tiempo_seg">Tiempo (segundos)</label>
+        {{ form.tiempo_seg }}
+        <p style="font-size:0.85rem;color:var(--muted);margin:0.25rem 0 0 0;">
+          Duración total del entrenamiento
+        </p>
+        {% if form.tiempo_seg.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.tiempo_seg.errors }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <label for="id_esfuerzo">Nivel de Esfuerzo (1-10)</label>
+    {{ form.esfuerzo }}
+    <div style="display:flex;justify-content:space-between;margin:0.5rem 0;font-size:0.85rem;color:var(--muted);">
+      <span>1 - Muy fácil</span>
+      <span>5 - Moderado</span>
+      <span>10 - Máximo esfuerzo</span>
+    </div>
+    {% if form.esfuerzo.errors %}
+      <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+        {{ form.esfuerzo.errors }}
+      </div>
+    {% endif %}
+
+    <label for="id_notas">Notas Adicionales (Opcional)</label>
+    {{ form.notas }}
+    <p style="font-size:0.85rem;color:var(--muted);margin:0.25rem 0 0 0;">
+      Cómo te sentiste, ejercicios que te costaron, logros, etc.
+    </p>
+    {% if form.notas.errors %}
+      <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+        {{ form.notas.errors }}
+      </div>
+    {% endif %}
+
+    <div style="display:flex;gap:1rem;margin-top:2rem;">
+      <button type="submit" class="btn btn-success" style="flex:1;">✓ Registrar Progreso</button>
+      <a href="{% url 'home' %}" class="btn" style="background:#e5e7eb;color:#374151;flex:1;text-align:center;">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<!-- Motivación Card -->
+<div class="card" style="max-width:700px;margin:2rem auto 0;background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:white;">
+  <h3 style="color:white;">💪 ¡Sigue así!</h3>
+  <p style="color:rgba(255,255,255,0.95);margin-bottom:0;">
+    Cada sesión registrada te acerca más a tus objetivos. La consistencia es la clave del éxito.
+  </p>
+</div>
 {% endblock %}

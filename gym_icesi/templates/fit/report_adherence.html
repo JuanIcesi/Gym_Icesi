@@ -1,12 +1,109 @@
-{% extends 'base.html' %}{% block content %}
-<h2>Adherencia ({{periodo.0}} a {{periodo.1}})</h2>
-<p>Días activos: <strong>{{ dias_activos }}</strong></p>
-<table>
-  <thead><tr><th>Tipo</th><th>Sesiones</th></tr></thead>
-  <tbody>
-  {% for row in por_tipo %}
-    <tr><td>{{ row.routine__items__exercise__tipo }}</td><td>{{ row.sesiones }}</td></tr>
-  {% empty %}<tr><td colspan="2">Sin datos</td></tr>{% endfor %}
-  </tbody>
-</table>
+{% extends 'base.html' %}
+{% block title %}Informe de Adherencia - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:2rem;">
+  <h1>📊 Informe de Adherencia</h1>
+  <p>Seguimiento de tu actividad física del {{ periodo.0|date:"d M Y" }} al {{ periodo.1|date:"d M Y" }}</p>
+</div>
+
+<!-- Stats principales -->
+<div class="stats-grid" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));">
+  <div class="stat-card">
+    <span class="stat-icon">📅</span>
+    <div class="stat-value">{{ dias_activos }}</div>
+    <div class="stat-label">Días Activos</div>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-icon">💪</span>
+    <div class="stat-value">{{ por_tipo|length }}</div>
+    <div class="stat-label">Tipos de Ejercicio</div>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-icon">🔥</span>
+    <div class="stat-value">
+      {% widthratio dias_activos 30 100 %}%
+    </div>
+    <div class="stat-label">Adherencia Mensual</div>
+  </div>
+</div>
+
+<!-- Distribución por tipo -->
+<div class="card">
+  <h3>📈 Distribución de Sesiones por Tipo de Ejercicio</h3>
+  {% if por_tipo %}
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo de Ejercicio</th>
+          <th style="text-align:center;">Sesiones</th>
+          <th style="text-align:right;">Progreso Visual</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in por_tipo %}
+          <tr>
+            <td>
+              <span class="badge badge-{{ row.routine__items__exercise__tipo }}">
+                {% if row.routine__items__exercise__tipo == 'cardio' %}🏃 Cardio
+                {% elif row.routine__items__exercise__tipo == 'fuerza' %}💪 Fuerza
+                {% elif row.routine__items__exercise__tipo == 'movilidad' %}🧘 Movilidad
+                {% else %}{{ row.routine__items__exercise__tipo|title }}
+                {% endif %}
+              </span>
+            </td>
+            <td style="text-align:center;font-weight:700;font-size:1.25rem;color:var(--brand);">
+              {{ row.sesiones }}
+            </td>
+            <td style="text-align:right;">
+              <div class="progress-bar" style="width:200px;max-width:100%;margin-left:auto;">
+                <div class="progress-fill" style="width:{% widthratio row.sesiones 20 100 %}%;"></div>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <p>No hay datos de ejercicios para este período.</p>
+      <a href="{% url 'progress_create' %}" class="btn btn-success">Registrar Primera Sesión</a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Recomendaciones -->
+<div class="card" style="background:#f0fdf4;border-color:#bbf7d0;margin-top:1.5rem;">
+  <h3 style="color:#166534;">💡 Recomendaciones</h3>
+  {% if dias_activos >= 15 %}
+    <p style="color:#15803d;margin-bottom:0;">
+      ¡Excelente adherencia! Estás manteniendo una rutina consistente.
+      Continúa así para maximizar tus resultados.
+    </p>
+  {% elif dias_activos >= 8 %}
+    <p style="color:#15803d;margin-bottom:0;">
+      Buen trabajo. Intenta incrementar gradualmente tu frecuencia de entrenamiento
+      para alcanzar tus objetivos más rápido.
+    </p>
+  {% elif dias_activos > 0 %}
+    <p style="color:#15803d;margin-bottom:0;">
+      Estás empezando bien. Trata de establecer una rutina más consistente,
+      apuntando a al menos 3-4 días de actividad por semana.
+    </p>
+  {% else %}
+    <p style="color:#15803d;margin-bottom:0;">
+      No has registrado actividad este mes. ¡Es momento de comenzar!
+      Establece metas pequeñas y alcanzables para mantener la motivación.
+    </p>
+  {% endif %}
+</div>
+
+<!-- Navegación a otros reportes -->
+<div style="margin-top:2rem;text-align:center;">
+  <a href="{% url 'report_load_balance' %}" class="btn">Ver Informe de Carga →</a>
+  <a href="{% url 'home' %}" class="action-link" style="margin-left:1rem;">Volver al Dashboard</a>
+</div>
 {% endblock %}

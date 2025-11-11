@@ -1,0 +1,112 @@
+# ============================================
+# GITIGNORE - Gym Icesi Django Project
+# ============================================
+
+# Claude Code
+.claude/
+
+# Python
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Entorno Virtual
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Migraciones (opcional - comenta si quieres versionar migraciones)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Environments
+.env
+.env.local
+.env.*.local
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# Backups
+*.bak
+*.swp
+*.swo
+
+# Compiled static files (si usas collectstatic)
+/static_root/
+/staticfiles/
+
+# Archivos de sesión
+*.session
+
+# Cache de Node (si usas npm/webpack)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Certificados y claves
+*.pem
+*.key
+*.crt
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp

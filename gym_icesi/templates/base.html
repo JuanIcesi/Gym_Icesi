@@ -4,24 +4,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gym Icesi</title>
-  <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+  <title>{% block title %}Gym Icesi - Bienestar Universitario{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
   {% block extra_head %}{% endblock %}
 </head>
 <body>
   <header class="site-header">
     <div class="inner container">
-      <h1 class="brand">Gym Icesi</h1>
+      <h1 class="brand">💪 Gym Icesi</h1>
       <nav class="main-nav">
         {% if user.is_authenticated %}
-          <a href="{% url 'home' %}">Home</a>
-          <a href="{% url 'routine_list' %}">Mis rutinas</a>
-          <a href="{% url 'progress_create' %}">Registrar progreso</a>
-          <a href="{% url 'report_adherence' %}">Informe adherencia</a>
-          <a href="{% url 'report_load_balance' %}">Informe carga</a>
-          {% if user.is_staff %}<a href="{% url 'trainer_assignees' %}">Entrenador</a>{% endif %}
-          {% if user.is_superuser %}<a href="{% url 'admin_assign_trainer' %}">Admin</a>{% endif %}
+          <a href="{% url 'home' %}">🏠 Dashboard</a>
+          <a href="{% url 'routine_list' %}">📋 Rutinas</a>
+          <a href="{% url 'progress_create' %}">✅ Progreso</a>
+          <a href="{% url 'report_adherence' %}">📊 Adherencia</a>
+          <a href="{% url 'report_load_balance' %}">📈 Carga</a>
+          {% if user.is_staff %}<a href="{% url 'trainer_assignees' %}">👥 Entrenador</a>{% endif %}
+          {% if user.is_superuser %}<a href="{% url 'admin_assign_trainer' %}">⚙️ Admin</a>{% endif %}
           <a href="{% url 'logout' %}" class="btn-ghost">Salir</a>
         {% else %}
           <a href="{% url 'login' %}" class="btn">Ingresar</a>
@@ -30,13 +29,17 @@
     </div>
   </header>
   <main class="container main-content">
-    <div class="messages">
-      {% for m in messages %}<div class="message">{{ m }}</div>{% endfor %}
-    </div>
+    {% if messages %}
+      <div class="messages">
+        {% for m in messages %}<div class="message">{{ m }}</div>{% endfor %}
+      </div>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
-  <footer class="site-footer container">
-    <small>&copy; {{ now|date:"Y" }} Gym Icesi</small>
+  <footer class="site-footer">
+    <div class="container">
+      <small>&copy; {% now "Y" %} Universidad Icesi - Bienestar Universitario | Gym Icesi</small>
+    </div>
   </footer>
   {% block extra_scripts %}{% endblock %}
 </body>
