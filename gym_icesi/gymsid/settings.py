@@ -5,11 +5,22 @@ Generado por 'django-admin startproject' (Django 5.2.8)
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv, find_dotenv  # 👈 para cargar las variables del .env
 
 # ----------------------------------------------------
 # Rutas base
 # ----------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# ----------------------------------------------------
+# Carga de variables de entorno (.env)
+# ----------------------------------------------------
+# Busca el archivo .env en BASE_DIR o en rutas superiores
+env_path = BASE_DIR / ".env"
+if env_path.exists():
+    load_dotenv(env_path, override=True)
+else:
+    load_dotenv(find_dotenv(), override=True)
 
 # ----------------------------------------------------
 # Seguridad
@@ -57,7 +68,7 @@ ROOT_URLCONF = 'gymsid.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # 👈 carpeta global
+        'DIRS': [BASE_DIR / 'templates'],  # carpeta global de templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,12 +84,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'gymsid.wsgi.application'
 
 # ----------------------------------------------------
-# Base de datos (por ahora SQLite)
+# Base de datos (usa variables del .env)
 # ----------------------------------------------------
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3'),
+        'USER': os.getenv('DB_USER', ''),
+        'PASSWORD': os.getenv('DB_PASS', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', ''),
     }
 }
 
@@ -117,3 +132,26 @@ LOGOUT_REDIRECT_URL = 'login'
 # Clave primaria por defecto
 # ----------------------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ----------------------------------------------------
+# Backends de autenticación
+# ----------------------------------------------------
+AUTHENTICATION_BACKENDS = [
+    'fit.auth_backend.InstitutionalBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# ----------------------------------------------------
+# Logging (opcional, útil para depurar autenticación)
+# ----------------------------------------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler'},
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+}
