@@ -45,7 +45,7 @@ body{
   letter-spacing:-0.5px;
 }
 .main-nav{display:flex;align-items:center;gap:0.5rem;}
-.main-nav a{
+.main-nav a, .main-nav button {
   text-decoration:none;
   color:rgba(255,255,255,0.9);
   padding:0.5rem 0.9rem;

@@ -137,7 +137,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Backends de autenticación
 # ----------------------------------------------------
 AUTHENTICATION_BACKENDS = [
-    'fit.auth_backend.InstitutionalBackend',
+    # 'fit.auth_backend.InstitutionalBackend',  # TODO: Habilitar cuando PostgreSQL esté configurado
     'django.contrib.auth.backends.ModelBackend',
 ]
 

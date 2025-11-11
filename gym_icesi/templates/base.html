@@ -21,7 +21,10 @@
           <a href="{% url 'report_load_balance' %}">📈 Carga</a>
           {% if user.is_staff %}<a href="{% url 'trainer_assignees' %}">👥 Entrenador</a>{% endif %}
           {% if user.is_superuser %}<a href="{% url 'admin_assign_trainer' %}">⚙️ Admin</a>{% endif %}
-          <a href="{% url 'logout' %}" class="btn-ghost">Salir</a>
+          <form action="{% url 'logout' %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost">Salir</button>
+          </form>
         {% else %}
           <a href="{% url 'login' %}" class="btn">Ingresar</a>
         {% endif %}
