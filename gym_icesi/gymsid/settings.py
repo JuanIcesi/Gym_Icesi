@@ -5,7 +5,7 @@ Generado por 'django-admin startproject' (Django 5.2.8)
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv  # Para leer variables desde el .env
+from dotenv import load_dotenv
 
 # ----------------------------------------------------
 # Rutas base
@@ -23,10 +23,8 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default-key")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# Hosts permitidos
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
-# En Render suelen setear RENDER_EXTERNAL_HOSTNAME
 render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 if render_host and render_host not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_host)
@@ -41,11 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    # Utilidades extra
     "django.contrib.humanize",
-
-    # App del proyecto
     "fit",
 ]
 
@@ -54,7 +48,6 @@ INSTALLED_APPS = [
 # ----------------------------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    # WhiteNoise para servir estáticos en producción (Render)
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -69,20 +62,22 @@ ROOT_URLCONF = "gymsid.urls"
 # ----------------------------------------------------
 # Templates
 # ----------------------------------------------------
-TEMPLATES = [{
-    "BACKEND": "django.template.backends.django.DjangoTemplates",
-    "DIRS": [BASE_DIR / "templates"],
-    "APP_DIRS": True,
-    "OPTIONS": {
-        "context_processors": [
-            "django.template.context_processors.debug",
-            "django.template.context_processors.request",
-            "django.contrib.auth.context_processors.auth",
-            "django.contrib.messages.context_processors.messages",
-            "fit.context_processors.nav_trainers",  # menú dinámico de entrenadores
-        ],
-    },
-}]
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "fit.context_processors.nav_trainers",
+            ],
+        },
+    }
+]
 
 WSGI_APPLICATION = "gymsid.wsgi.application"
 
@@ -94,8 +89,7 @@ DATABASES = {
         "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
         "NAME": os.getenv("DB_NAME", "neondb"),
         "USER": os.getenv("DB_USER", ""),
-        # usamos DB_PASS para ser consistente con tu .env local y en Render
-        "PASSWORD": os.getenv("DB_PASS", ""),
+        "PASSWORD": os.getenv("DB_PASSWORD", ""),
         "HOST": os.getenv("DB_HOST", "127.0.0.1"),
         "PORT": os.getenv("DB_PORT", "5432"),
         "OPTIONS": {
@@ -125,16 +119,10 @@ USE_TZ = True
 # ----------------------------------------------------
 # Archivos estáticos
 # ----------------------------------------------------
-# URL pública de los estáticos
 STATIC_URL = "/static/"
-
-# Carpeta donde collectstatic deja todo (Render lee de aquí)
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# Carpeta donde tú tienes tus archivos en desarrollo
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Almacenamiento de estáticos (Django 4.2+ + WhiteNoise)
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -162,7 +150,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # ----------------------------------------------------
-# Logging (útil para depurar autenticación)
+# Logging
 # ----------------------------------------------------
 LOGGING = {
     "version": 1,
