@@ -428,7 +428,7 @@ a.action-link:hover{
 .auth-visual{
   flex:1;
   min-height:550px;
-  background:url('/static/img/gym-hero.jpg') no-repeat center;
+  background:url('/static/img/login-hero.jpg') no-repeat center;
   background-size:cover;
   border-radius:16px;
   box-shadow:0 20px 60px rgba(0,0,0,0.3);
