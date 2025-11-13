@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Entrenadores institucionales</h3>
+
+  {% if trainers %}
+    <table class="table table-striped mt-3">
+      <thead class="table-primary">
+        <tr>
+          <th>ID</th><th>Nombre</th><th>Correo</th><th>Facultad</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in trainers %}
+        <tr>
+          <td>{{ t.id }}</td>
+          <td>{{ t.name }}</td>
+          <td>{{ t.email }}</td>
+          <td>{{ t.faculty }}</td>
+          <td>
+            <a class="btn btn-sm btn-primary" href="{% url 'trainer_detail' t.id %}">
+              Ver
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">No hay entrenadores registrados.</p>
+  {% endif %}
+</div>
+{% endblock %}

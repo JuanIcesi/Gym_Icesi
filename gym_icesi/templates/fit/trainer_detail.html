@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>{{ trainer.name }}</h3>
+  <p class="mb-1"><strong>ID:</strong> {{ trainer.id }}</p>
+  <p class="mb-1"><strong>Correo:</strong> {{ trainer.email }}</p>
+  <p class="mb-1"><strong>Tipo:</strong> {{ trainer.type }}</p>
+  <p class="mb-3"><strong>Facultad:</strong> {{ trainer.faculty }} — <strong>Campus:</strong> {{ trainer.campus }}</p>
+
+  {% if asignados %}
+    <h5>Usuarios asignados</h5>
+    <ul>
+      {% for a in asignados %}
+        <li>{{ a.user.username }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">Sin usuarios asignados.</p>
+  {% endif %}
+</div>
+{% endblock %}

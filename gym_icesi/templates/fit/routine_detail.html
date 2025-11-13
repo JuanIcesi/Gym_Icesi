@@ -1,118 +1,76 @@
-{% extends 'base.html' %}
-{% block title %}{{ routine.nombre }} - Gym Icesi{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Detalle de rutina - {{ routine.nombre }}{% endblock %}
 
 {% block content %}
-<div style="margin-bottom:1.5rem;">
-  <a href="{% url 'routine_list' %}" class="action-link">← Volver a rutinas</a>
-</div>
-
-<div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
-    <div>
-      <h1 style="margin-bottom:0.5rem;">{{ routine.nombre }}</h1>
-      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
-        {% if routine.es_predisenada %}
-          <span class="badge badge-success">✓ Rutina Prediseñada</span>
-        {% else %}
-          <span class="badge badge-primary">🏋️ Rutina Personal</span>
-        {% endif %}
-        {% if routine.autor_trainer %}
-          <span style="color:var(--muted);font-size:0.9rem;">
-            Diseñada por: {{ routine.autor_trainer.first_name }} {{ routine.autor_trainer.last_name }}
-          </span>
-        {% endif %}
-        <span style="color:var(--muted);font-size:0.9rem;">
-          | Creada: {{ routine.fecha_creacion|date:"d M Y" }}
-        </span>
-      </div>
-    </div>
-    {% if routine.user_id == user.id %}
-      <a href="{% url 'routine_add_item' routine.pk %}" class="btn btn-success">➕ Añadir Ejercicio</a>
-    {% endif %}
-  </div>
-
-  <h3 style="margin-bottom:1rem;">Ejercicios de la Rutina</h3>
-
-  {% if items %}
-    <div style="display:flex;flex-direction:column;gap:0.75rem;">
-      {% for it in items %}
-        <div class="routine-item">
-          <div style="display:flex;align-items:center;gap:1rem;flex:1;">
-            <div style="background:var(--brand);color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">
-              {{ forloop.counter }}
-            </div>
-            <div class="routine-item-info">
-              <div class="routine-item-title">{{ it.exercise.nombre }}</div>
-              <div class="routine-item-meta">
-                {% if it.exercise.tipo %}
-                  <span class="badge badge-{{ it.exercise.tipo }}">{{ it.exercise.get_tipo_display|default:it.exercise.tipo }}</span>
-                {% endif %}
-                {% if it.series and it.reps %}
-                  <strong>{{ it.series }} series × {{ it.reps }} reps</strong>
-                {% endif %}
-                {% if it.tiempo_seg %}
-                  | <strong>{{ it.tiempo_seg }}s</strong>
-                {% endif %}
-                {% if it.exercise.dificultad %}
-                  | Dificultad:
-                  {% for i in "12345" %}
-                    {% if forloop.counter <= it.exercise.dificultad %}⭐{% else %}☆{% endif %}
-                  {% endfor %}
-                {% endif %}
-              </div>
-              {% if it.notas %}
-                <div style="margin-top:0.5rem;padding:0.5rem;background:#f8fafc;border-radius:6px;font-size:0.9rem;">
-                  💬 {{ it.notas }}
-                </div>
-              {% endif %}
-            </div>
-          </div>
-          {% if routine.user_id == user.id %}
-            <div class="routine-item-actions">
-              <a href="{% url 'routine_add_item' routine.pk %}?edit={{ it.pk }}" class="btn btn-sm" style="font-size:0.85rem;">Editar</a>
-            </div>
-          {% endif %}
-        </div>
-      {% endfor %}
-    </div>
-
-    <!-- Resumen de la Rutina -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:1rem;margin-top:2rem;padding:1.5rem;background:#f8fafc;border-radius:10px;">
-      <div>
-        <div style="font-size:0.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.25rem;">Total Ejercicios</div>
-        <div style="font-size:1.5rem;font-weight:700;color:var(--brand);">{{ items|length }}</div>
-      </div>
-      <div>
-        <div style="font-size:0.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.25rem;">Cardio</div>
-        <div style="font-size:1.5rem;font-weight:700;color:var(--brand);">{{ items|dictsort:"exercise.tipo"|dictsortreversed:"exercise.tipo"|selectattr:"exercise.tipo","equalto","cardio"|list|length }}</div>
-      </div>
-      <div>
-        <div style="font-size:0.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.25rem;">Fuerza</div>
-        <div style="font-size:1.5rem;font-weight:700;color:var(--brand);">{{ items|dictsort:"exercise.tipo"|selectattr:"exercise.tipo","equalto","fuerza"|list|length }}</div>
-      </div>
-      <div>
-        <div style="font-size:0.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.25rem;">Movilidad</div>
-        <div style="font-size:1.5rem;font-weight:700;color:var(--brand);">{{ items|dictsort:"exercise.tipo"|selectattr:"exercise.tipo","equalto","movilidad"|list|length }}</div>
-      </div>
-    </div>
-  {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">🏃</div>
-      <p>Esta rutina aún no tiene ejercicios.</p>
-      {% if routine.user_id == user.id %}
-        <a href="{% url 'routine_add_item' routine.pk %}" class="btn btn-success">Añadir Primer Ejercicio</a>
+<section class="card">
+  <header class="card-header">
+    <h2>{{ routine.nombre }}</h2>
+    <p class="muted">
+      Creada por:
+      {% if routine.es_predisenada %}
+        <strong>Bienestar / Entrenador institucional</strong>
+      {% else %}
+        <strong>{{ routine.user.username }}</strong>
       {% endif %}
-    </div>
-  {% endif %}
-</div>
+      · {{ routine.fecha_creacion|date:"d/m/Y" }}
+    </p>
+  </header>
 
-{% if routine.user_id == user.id and items %}
-<div class="card" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:white;margin-top:1.5rem;">
-  <h3 style="color:white;">🎯 ¿Listo para entrenar?</h3>
-  <p style="color:rgba(255,255,255,0.9);margin-bottom:1rem;">
-    Registra tu progreso cuando completes esta rutina para hacer seguimiento de tu evolución.
-  </p>
-  <a href="{% url 'progress_create' %}" class="btn" style="background:white;color:#10b981;">✅ Registrar Progreso</a>
-</div>
-{% endif %}
+  <div class="card-body">
+    {% if routine.descripcion %}
+      <p>{{ routine.descripcion }}</p>
+      <hr>
+    {% endif %}
+
+    <h3>Ejercicios de la rutina</h3>
+
+    {% if items %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Ejercicio</th>
+            <th>Tipo</th>
+            <th>Series</th>
+            <th>Reps</th>
+            <th>Tiempo (seg)</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in items %}
+            <tr>
+              <td>{{ it.orden }}</td>
+              <td>{{ it.exercise.nombre }}</td>
+              <td>{{ it.exercise.tipo }}</td>
+              <td>{{ it.series|default:"-" }}</td>
+              <td>{{ it.reps|default:"-" }}</td>
+              <td>{{ it.tiempo_seg|default:"-" }}</td>
+              <td>{{ it.notas|default:"-" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">Esta rutina aún no tiene ejercicios.</p>
+    {% endif %}
+
+    <div class="actions" style="margin-top: 1rem;">
+      {% if routine.user == user and not routine.es_predisenada %}
+        <a href="{% url 'routine_add_item' routine.pk %}" class="btn">
+          ➕ Agregar ejercicio
+        </a>
+      {% endif %}
+
+      {% if routine.es_predisenada and routine.user != user %}
+        <a href="{% url 'routine_adopt' routine.pk %}" class="btn">
+          📋 Adoptar esta rutina
+        </a>
+      {% endif %}
+
+      <a href="{% url 'routine_list' %}" class="btn-ghost">← Volver a mis rutinas</a>
+    </div>
+  </div>
+</section>
 {% endblock %}
