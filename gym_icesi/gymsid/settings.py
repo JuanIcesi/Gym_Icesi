@@ -1,6 +1,6 @@
 """
 Django settings for gymsid project.
-Generado por 'django-admin startproject' (Django 5.2.8)
+Generado por 'django-admin startproject'
 """
 
 from pathlib import Path
@@ -22,7 +22,12 @@ load_dotenv(BASE_DIR / ".env")
 # ----------------------------------------------------
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default-key")
 DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+
+# Para desarrollo y despliegue en Render (.onrender.com)
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    "127.0.0.1,localhost,.onrender.com"
+).split(",")
 
 # Configuración CSRF para desarrollo
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
@@ -77,7 +82,7 @@ TEMPLATES = [{
             "django.template.context_processors.request",
             "django.contrib.auth.context_processors.auth",
             "django.contrib.messages.context_processors.messages",
-            "fit.context_processors.nav_trainers",  # 👈 nuestro menú dinámico
+            "fit.context_processors.nav_trainers",
         ],
     },
 }]
@@ -139,7 +144,12 @@ USE_TZ = True
 # Archivos estáticos
 # ----------------------------------------------------
 STATIC_URL = "static/"
+
+# Carpeta con estáticos de la app (para desarrollo)
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# Carpeta donde collectstatic los copiará (para producción / Render)
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ----------------------------------------------------
 # Config de login/logout
