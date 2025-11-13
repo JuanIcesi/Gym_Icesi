@@ -15,11 +15,28 @@
 
 			{% if form.errors %}
 				<div style="background:#fee2e2;color:#991b1b;padding:1rem;border-radius:8px;margin-bottom:1rem;border-left:4px solid #ef4444;">
-					<strong>Error de autenticación</strong>
+					<strong>⚠️ Error de autenticación</strong>
 					<p style="margin:0.5rem 0 0 0;font-size:0.9rem;">
-						Usuario o contraseña incorrectos. Por favor, verifica tus credenciales.
+						{% if form.non_field_errors %}
+							{{ form.non_field_errors|first }}
+						{% else %}
+							El usuario o la contraseña son incorrectos. Por favor, verifica tus credenciales e intenta nuevamente.
+						{% endif %}
 					</p>
 				</div>
+			{% endif %}
+			
+			{% if messages %}
+				{% for message in messages %}
+					{% if 'login_error' in message.tags %}
+						<div style="background:#fee2e2;color:#991b1b;padding:1rem;border-radius:8px;margin-bottom:1rem;border-left:4px solid #ef4444;">
+							<strong>⚠️ Error de autenticación</strong>
+							<p style="margin:0.5rem 0 0 0;font-size:0.9rem;">
+								{{ message }}
+							</p>
+						</div>
+					{% endif %}
+				{% endfor %}
 			{% endif %}
 
 			<form method="post">

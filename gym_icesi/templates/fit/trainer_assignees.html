@@ -1,4 +1,60 @@
-{% extends 'base.html' %}{% block content %}
-<h2>Asignados</h2>
-<ul>{% for a in asignados %}<li><a href="{% url 'trainer_feedback' a.user.id %}">{{ a.user.username }}</a></li>{% empty %}<li>Sin asignados</li>{% endfor %}</ul>
+{% extends 'base.html' %}
+{% block title %}Mis Asignados - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>🏋️ Mis Usuarios Asignados</h2>
+  <p class="muted">Usuarios que están bajo tu supervisión. Haz clic en un usuario para ver su progreso y dar recomendaciones.</p>
+  
+  {% if asignados %}
+    <table class="table" style="margin-top:1.5rem;">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Fecha de Asignación</th>
+          <th>Rutinas</th>
+          <th>Último Progreso</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asignado in asignados %}
+          <tr>
+            <td>
+              <strong>{{ asignado.user.username }}</strong>
+              {% if asignado.user.first_name or asignado.user.last_name %}
+                <br>
+                <small class="muted">{{ asignado.user.first_name }} {{ asignado.user.last_name }}</small>
+              {% endif %}
+            </td>
+            <td>{{ asignado.fecha_asignacion|date:"d/m/Y" }}</td>
+            <td>
+              {{ asignado.user.routines.count }} rutina{{ asignado.user.routines.count|pluralize }}
+            </td>
+            <td>
+              {% if asignado.last_progress_date %}
+                {{ asignado.last_progress_date|date:"d/m/Y" }}
+              {% else %}
+                <span class="muted">Sin registros</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'trainer_feedback' asignado.user.id %}" class="btn btn-sm btn-primary">
+                Ver Progreso
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state" style="margin-top:2rem;">
+      <div class="empty-state-icon">👥</div>
+      <p>No tienes usuarios asignados actualmente.</p>
+      <p style="font-size:0.9rem;color:var(--muted);">
+        Los administradores pueden asignarte usuarios desde el módulo de administración.
+      </p>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}

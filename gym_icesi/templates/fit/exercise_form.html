@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ title|default:"Crear Ejercicio" }} - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{{ title|default:"Crear Ejercicio" }}</h2>
+  
+  <form method="post">
+    {% csrf_token %}
+    
+    <div class="form-group">
+      <label for="{{ form.nombre.id_for_label }}">Nombre del Ejercicio *</label>
+      {{ form.nombre }}
+      {% if form.nombre.errors %}
+        <div class="error">{{ form.nombre.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.tipo.id_for_label }}">Tipo *</label>
+      {{ form.tipo }}
+      {% if form.tipo.errors %}
+        <div class="error">{{ form.tipo.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
+      {{ form.descripcion }}
+      {% if form.descripcion.errors %}
+        <div class="error">{{ form.descripcion.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="{{ form.duracion_min.id_for_label }}">Duración (minutos)</label>
+        {{ form.duracion_min }}
+        {% if form.duracion_min.errors %}
+          <div class="error">{{ form.duracion_min.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.dificultad.id_for_label }}">Dificultad (1-5)</label>
+        {{ form.dificultad }}
+        {% if form.dificultad.errors %}
+          <div class="error">{{ form.dificultad.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.video_url.id_for_label }}">URL del Video (opcional)</label>
+      {{ form.video_url }}
+      {% if form.video_url.errors %}
+        <div class="error">{{ form.video_url.errors }}</div>
+      {% endif %}
+      <small>Pega el enlace de YouTube o cualquier video demostrativo</small>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">Guardar Ejercicio</button>
+      <a href="{% url 'routine_list' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

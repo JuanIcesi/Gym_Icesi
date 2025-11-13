@@ -9,11 +9,15 @@ class Exercise(models.Model):
     duracion_min = models.PositiveIntegerField(default=0)
     dificultad = models.PositiveSmallIntegerField(default=1)  # 1-5
     video_url = models.URLField(blank=True)
+    creado_por = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='exercises_created')
+    es_personalizado = models.BooleanField(default=False)  # True si fue creado por usuario/entrenador
+    fecha_creacion = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     def __str__(self): return self.nombre
 
 class Routine(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='routines')
     nombre = models.CharField(max_length=120)
+    descripcion = models.TextField(blank=True)
     es_predisenada = models.BooleanField(default=False)
     autor_trainer = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='routines_autor')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -66,3 +70,15 @@ class TrainerMonthlyStats(models.Model):
     seguimientos_realizados = models.PositiveIntegerField(default=0)
     class Meta:
         unique_together = [('trainer','anio','mes')]
+
+class TrainerRecommendation(models.Model):
+    """Recomendaciones y feedback de entrenadores a usuarios"""
+    trainer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recommendations_given')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recommendations_received')
+    routine = models.ForeignKey(Routine, null=True, blank=True, on_delete=models.SET_NULL, related_name='recommendations')
+    progress_log = models.ForeignKey(ProgressLog, null=True, blank=True, on_delete=models.SET_NULL, related_name='recommendations')
+    mensaje = models.TextField()
+    fecha = models.DateTimeField(auto_now_add=True)
+    leido = models.BooleanField(default=False)
+    class Meta:
+        ordering = ['-fecha']

@@ -7,14 +7,18 @@ def nav_trainers(request):
     """
     trainers = []
     if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
-        with connection.cursor() as cur:
-            cur.execute("""
-                SELECT e.id, e.first_name, e.last_name
-                FROM employees e
-                WHERE UPPER(e.employee_type) IN ('TRAINER', 'ENTRENADOR')
-                ORDER BY e.last_name
-                LIMIT 10
-            """)
-            for (emp_id, fn, ln) in cur.fetchall():
-                trainers.append({"id": emp_id, "name": f"{fn} {ln}"})
+        try:
+            with connection.cursor() as cur:
+                cur.execute("""
+                    SELECT e.id, e.first_name, e.last_name
+                    FROM employees e
+                    WHERE UPPER(e.employee_type) IN ('TRAINER', 'ENTRENADOR')
+                    ORDER BY e.last_name
+                    LIMIT 10
+                """)
+                for (emp_id, fn, ln) in cur.fetchall():
+                    trainers.append({"id": emp_id, "name": f"{fn} {ln}"})
+        except Exception:
+            # Si falla (por ejemplo, usando SQLite sin BD institucional), continuar sin trainers
+            pass
     return {"nav_trainers": trainers}

@@ -1,10 +1,59 @@
-{% extends 'base.html' %}{% block content %}
-<h2>Asignar entrenador</h2>
-<form method="post">{% csrf_token %}
-  <label>Usuario</label>
-  <select name="user_id">{% for u in users %}<option value="{{u.id}}">{{u.username}}</option>{% endfor %}</select>
-  <label>Entrenador</label>
-  <select name="trainer_id">{% for t in trainers %}<option value="{{t.id}}">{{t.username}}</option>{% endfor %}</select>
-  <button>Guardar</button>
-</form>
+{% extends 'base.html' %}
+{% block title %}Asignar Entrenador - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>⚙️ Asignar Entrenador a Usuario</h2>
+  <p class="muted">Asigna o modifica la asignación de un entrenador a un usuario del sistema.</p>
+
+  <form method="post" style="margin-top:2rem;">
+    {% csrf_token %}
+    
+    <div class="form-group">
+      <label for="user_id">Usuario *</label>
+      <select name="user_id" id="user_id" class="form-control" required>
+        <option value="">-- Selecciona un usuario --</option>
+        {% for u in users %}
+          <option value="{{ u.id }}">
+            {{ u.username }}
+            {% if u.first_name or u.last_name %}
+              - {{ u.first_name }} {{ u.last_name }}
+            {% endif %}
+          </option>
+        {% endfor %}
+      </select>
+      <small>Usuarios que no son entrenadores</small>
+    </div>
+
+    <div class="form-group" style="margin-top:1.5rem;">
+      <label for="trainer_id">Entrenador *</label>
+      <select name="trainer_id" id="trainer_id" class="form-control" required>
+        <option value="">-- Selecciona un entrenador --</option>
+        {% for t in trainers %}
+          <option value="{{ t.id }}">
+            {{ t.username }}
+            {% if t.first_name or t.last_name %}
+              - {{ t.first_name }} {{ t.last_name }}
+            {% endif %}
+          </option>
+        {% endfor %}
+      </select>
+      <small>Usuarios con permisos de entrenador (staff)</small>
+    </div>
+
+    <div style="display:flex;gap:1rem;margin-top:2rem;">
+      <button type="submit" class="btn btn-success" style="flex:1;">✓ Guardar Asignación</button>
+      <a href="{% url 'home' %}" class="btn" style="background:#e5e7eb;color:#374151;flex:1;text-align:center;">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<!-- Info sobre asignaciones existentes -->
+<div class="card" style="margin-top:2rem;background:#f0fdf4;border-color:#bbf7d0;">
+  <h3 style="color:#166534;">ℹ️ Información</h3>
+  <p style="color:#15803d;margin-bottom:0;">
+    Si el usuario ya tiene un entrenador asignado, esta acción actualizará la asignación.
+    Solo puede haber una asignación activa por usuario a la vez.
+  </p>
+</div>
 {% endblock %}

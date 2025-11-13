@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Ejercicios del Sistema - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <h2>💪 Ejercicios del Sistema</h2>
+    <a href="{% url 'trainer_exercise_create' %}" class="btn btn-success">➕ Registrar Nuevo Ejercicio</a>
+  </div>
+
+  {% if exercises %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Dificultad</th>
+          <th>Duración</th>
+          <th>Creado Por</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for exercise in exercises %}
+          <tr>
+            <td><strong>{{ exercise.nombre }}</strong></td>
+            <td><span class="badge">{{ exercise.get_tipo_display }}</span></td>
+            <td>{{ exercise.dificultad }}/5</td>
+            <td>{{ exercise.duracion_min }} min</td>
+            <td>
+              {% if exercise.creado_por %}
+                {{ exercise.creado_por.username }}
+              {% else %}
+                Sistema
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <p>No hay ejercicios registrados en el sistema.</p>
+      <a href="{% url 'trainer_exercise_create' %}" class="btn">Registrar Primer Ejercicio</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

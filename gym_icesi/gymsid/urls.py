@@ -1,7 +1,7 @@
 # gymsid/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
+from fit.auth_views import CustomLoginView, CustomLogoutView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -9,12 +9,12 @@ urlpatterns = [
     # LOGIN / LOGOUT
     path(
         "login/",
-        auth_views.LoginView.as_view(template_name="fit/login.html"),
+        CustomLoginView.as_view(),
         name="login",
     ),
     path(
         "logout/",
-        auth_views.LogoutView.as_view(),
+        CustomLogoutView.as_view(),
         name="logout",
     ),
 

@@ -15,20 +15,22 @@
   <form method="post">
     {% csrf_token %}
 
-    <label for="id_nombre">Nombre de la Rutina</label>
-    {{ form.nombre }}
+    <div class="form-group">
+      <label for="id_nombre">Nombre de la Rutina *</label>
+      {{ form.nombre }}
+      {% if form.nombre.errors %}
+        <div class="error">{{ form.nombre.errors }}</div>
+      {% endif %}
+    </div>
 
-    {% if form.nombre.help_text %}
-      <p style="font-size:0.9rem;color:var(--muted);margin-top:0.25rem;">
-        {{ form.nombre.help_text }}
-      </p>
-    {% endif %}
-
-    {% if form.nombre.errors %}
-      <div style="background:#fee2e2;color:#991b1b;padding:0.75rem;border-radius:8px;margin-top:0.5rem;">
-        {{ form.nombre.errors }}
-      </div>
-    {% endif %}
+    <div class="form-group">
+      <label for="id_descripcion">Descripción (opcional)</label>
+      {{ form.descripcion }}
+      {% if form.descripcion.errors %}
+        <div class="error">{{ form.descripcion.errors }}</div>
+      {% endif %}
+      <small>Describe el objetivo o enfoque de esta rutina</small>
+    </div>
 
     <div style="display:flex;gap:1rem;margin-top:2rem;">
       <button type="submit" class="btn btn-success" style="flex:1;">✓ Crear Rutina</button>

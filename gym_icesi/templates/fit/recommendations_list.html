@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Mis Recomendaciones - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>💬 Recomendaciones de mi Entrenador</h2>
+
+  {% if recommendations %}
+    <div class="recommendations-list">
+      {% for rec in recommendations %}
+        <div class="card" style="margin-bottom:1rem;{% if not rec.leido %}border-left:4px solid #3b82f6;{% endif %}">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+            <div>
+              <strong>{{ rec.trainer.username }}</strong>
+              <span class="muted"> · {{ rec.fecha|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% if not rec.leido %}
+              <span class="badge badge-primary">Nuevo</span>
+            {% endif %}
+          </div>
+          
+          {% if rec.routine %}
+            <p style="margin:0.5rem 0;color:var(--muted);">
+              📋 Sobre la rutina: <strong>{{ rec.routine.nombre }}</strong>
+            </p>
+          {% endif %}
+          
+          {% if rec.progress_log %}
+            <p style="margin:0.5rem 0;color:var(--muted);">
+              📊 Sobre el progreso del {{ rec.progress_log.fecha|date:"d/m/Y" }}
+            </p>
+          {% endif %}
+          
+          <div style="background:#f9fafb;padding:1rem;border-radius:8px;margin-top:0.5rem;">
+            {{ rec.mensaje|linebreaks }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No has recibido recomendaciones aún.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

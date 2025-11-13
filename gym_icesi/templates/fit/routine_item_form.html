@@ -1,4 +1,70 @@
-{% extends 'base.html' %}{% block content %}
-<h2>Añadir ejercicio a {{ routine.nombre }}</h2>
-<form method="post">{% csrf_token %}{{ form.as_p }}<button>Agregar</button></form>
+{% extends 'base.html' %}
+{% block title %}Agregar Ejercicio a {{ routine.nombre }} - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>➕ Agregar Ejercicio a "{{ routine.nombre }}"</h2>
+  
+  <form method="post">
+    {% csrf_token %}
+    
+    <div class="form-group">
+      <label for="{{ form.exercise.id_for_label }}">Ejercicio *</label>
+      {{ form.exercise }}
+      {% if form.exercise.errors %}
+        <div class="error">{{ form.exercise.errors }}</div>
+      {% endif %}
+      <small>¿No encuentras el ejercicio? <a href="{% url 'exercise_create' %}">Crea uno personalizado</a></small>
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.orden.id_for_label }}">Orden en la rutina *</label>
+      {{ form.orden }}
+      {% if form.orden.errors %}
+        <div class="error">{{ form.orden.errors }}</div>
+      {% endif %}
+      <small>Número que indica el orden de ejecución (1, 2, 3...)</small>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="{{ form.series.id_for_label }}">Series</label>
+        {{ form.series }}
+        {% if form.series.errors %}
+          <div class="error">{{ form.series.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.reps.id_for_label }}">Repeticiones</label>
+        {{ form.reps }}
+        {% if form.reps.errors %}
+          <div class="error">{{ form.reps.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.tiempo_seg.id_for_label }}">Tiempo (segundos)</label>
+        {{ form.tiempo_seg }}
+        {% if form.tiempo_seg.errors %}
+          <div class="error">{{ form.tiempo_seg.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.notas.id_for_label }}">Notas (opcional)</label>
+      {{ form.notas }}
+      {% if form.notas.errors %}
+        <div class="error">{{ form.notas.errors }}</div>
+      {% endif %}
+      <small>Instrucciones adicionales o variaciones del ejercicio</small>
+    </div>
+
+    <div class="actions" style="margin-top:1.5rem;">
+      <button type="submit" class="btn btn-primary">Agregar Ejercicio</button>
+      <a href="{% url 'routine_detail' routine.pk %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
 {% endblock %}

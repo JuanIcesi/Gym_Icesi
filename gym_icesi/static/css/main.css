@@ -108,6 +108,42 @@ p{color:var(--muted);line-height:1.7;}
   border-left:4px solid var(--brand);
   margin-bottom:0.75rem;
   box-shadow:var(--shadow-sm);
+  animation:slideIn 0.3s ease;
+}
+
+.message-success{
+  background:#f0fdf4;
+  border-left-color:var(--success);
+  color:#166534;
+}
+
+.message-error{
+  background:#fee2e2;
+  border-left-color:var(--danger);
+  color:#991b1b;
+}
+
+.message-warning{
+  background:#fef3c7;
+  border-left-color:var(--warning);
+  color:#92400e;
+}
+
+.message-info{
+  background:#eff6ff;
+  border-left-color:var(--brand);
+  color:#1e40af;
+}
+
+@keyframes slideIn{
+  from{
+    opacity:0;
+    transform:translateX(-10px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(0);
+  }
 }
 
 /* Forms mejorados */
@@ -356,13 +392,15 @@ a.action-link:hover{
 .site-footer{
   padding:2rem 0;
   border-top:2px solid #e6eef8;
-  margin-top:3rem;
+  margin-top:4rem;
   text-align:center;
   background:linear-gradient(180deg, transparent, #f8fafc);
 }
 .site-footer small{
   color:var(--muted);
   font-size:0.9rem;
+  display:block;
+  padding:1rem;
 }
 
 /* Responsive mejorado */
@@ -422,4 +460,257 @@ a.action-link:hover{
   .auth-hero{flex-direction:column;padding:1rem;gap:1.5rem;}
   .auth-visual{width:100%;min-height:200px;}
   .auth-form{width:100%;max-width:440px;}
+}
+
+/* Exercise Cards - Diseño mejorado */
+.exercise-list{
+  display:flex;
+  flex-direction:column;
+  gap:1.5rem;
+  margin-top:1.5rem;
+}
+
+.exercise-card{
+  background:linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border:2px solid #e6eef8;
+  border-radius:16px;
+  padding:1.5rem;
+  box-shadow:var(--shadow);
+  transition:all 0.3s ease;
+  position:relative;
+  overflow:hidden;
+}
+
+.exercise-card::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:0;
+  width:4px;
+  height:100%;
+  background:linear-gradient(180deg, var(--brand), var(--success));
+}
+
+.exercise-card:hover{
+  box-shadow:var(--shadow-lg);
+  transform:translateY(-3px);
+  border-color:var(--brand);
+}
+
+.exercise-header{
+  display:flex;
+  align-items:flex-start;
+  gap:1rem;
+  margin-bottom:1rem;
+}
+
+.exercise-number{
+  background:linear-gradient(135deg, var(--brand), var(--brand-dark));
+  color:#fff;
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  font-size:1.2rem;
+  flex-shrink:0;
+  box-shadow:0 4px 8px rgba(11,116,222,0.3);
+}
+
+.exercise-info{
+  flex:1;
+}
+
+.exercise-info h4{
+  margin:0 0 0.5rem 0;
+  color:#10314a;
+  font-size:1.3rem;
+  font-weight:700;
+}
+
+.exercise-description{
+  color:var(--muted);
+  line-height:1.7;
+  margin:1rem 0;
+  padding:1rem;
+  background:#f8fafc;
+  border-radius:8px;
+  border-left:3px solid var(--brand);
+}
+
+.difficulty-badge{
+  display:inline-block;
+  padding:0.3rem 0.8rem;
+  background:#fef3c7;
+  color:#92400e;
+  border-radius:20px;
+  font-size:0.85rem;
+  font-weight:600;
+  margin-left:0.5rem;
+}
+
+/* Video Styles */
+.exercise-video{
+  margin:1rem 0;
+}
+
+.video-link{
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  padding:0.75rem 1.5rem;
+  background:linear-gradient(135deg, #ef4444, #dc2626);
+  color:#fff;
+  border-radius:8px;
+  text-decoration:none;
+  font-weight:600;
+  transition:all 0.3s;
+  box-shadow:0 4px 8px rgba(239,68,68,0.3);
+}
+
+.video-link:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 12px rgba(239,68,68,0.4);
+  background:linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.video-icon{
+  font-size:1.2rem;
+}
+
+.video-embed{
+  margin-top:1rem;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 8px 16px rgba(0,0,0,0.15);
+  background:#000;
+}
+
+.video-embed iframe{
+  display:block;
+  width:100%;
+  border:none;
+}
+
+/* Exercise Details */
+.exercise-details{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:1rem;
+  margin-top:1rem;
+  padding-top:1rem;
+  border-top:2px solid #e6eef8;
+}
+
+.detail-item{
+  padding:0.75rem;
+  background:#f8fafc;
+  border-radius:8px;
+  font-size:0.95rem;
+}
+
+.detail-item strong{
+  color:var(--brand);
+  display:block;
+  margin-bottom:0.25rem;
+  font-size:0.85rem;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+
+.detail-item.notes{
+  grid-column:1/-1;
+  background:#eff6ff;
+  border-left:3px solid var(--brand);
+}
+
+/* Form Groups mejorados */
+.form-group{
+  margin-bottom:1.5rem;
+}
+
+.form-group label{
+  display:block;
+  font-weight:600;
+  margin-bottom:0.5rem;
+  color:#10314a;
+  font-size:0.95rem;
+}
+
+.form-group small{
+  display:block;
+  margin-top:0.5rem;
+  color:var(--muted);
+  font-size:0.85rem;
+}
+
+.form-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:1rem;
+}
+
+.error{
+  background:#fee2e2;
+  color:#991b1b;
+  padding:0.75rem;
+  border-radius:8px;
+  margin-top:0.5rem;
+  border-left:4px solid #ef4444;
+  font-size:0.9rem;
+}
+
+/* Card Header mejorado */
+.card-header{
+  padding-bottom:1rem;
+  margin-bottom:1.5rem;
+  border-bottom:2px solid #e6eef8;
+}
+
+.card-header h2{
+  margin-bottom:0.5rem;
+}
+
+.card-body{
+  padding-top:0;
+}
+
+/* Mejoras adicionales de diseño */
+.btn-secondary{
+  background:#e5e7eb;
+  color:#374151;
+}
+
+.btn-secondary:hover{
+  background:#d1d5db;
+  transform:translateY(-1px);
+}
+
+.actions{
+  display:flex;
+  gap:1rem;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.muted{
+  color:var(--muted);
+  font-size:0.95rem;
+}
+
+/* Responsive para exercise cards */
+@media (max-width:768px){
+  .exercise-header{
+    flex-direction:column;
+  }
+  
+  .exercise-details{
+    grid-template-columns:1fr;
+  }
+  
+  .video-embed iframe{
+    height:250px;
+  }
 }

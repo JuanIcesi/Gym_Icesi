@@ -12,6 +12,7 @@ from .models import (
     ProgressLog,
     UserMonthlyStats,
     TrainerMonthlyStats,
+    TrainerRecommendation,
 )
 
 # ----------------------------------------------------
@@ -99,3 +100,11 @@ class InstitutionalUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'role', 'is_active', 'student_id', 'employee_id')
     search_fields = ('username', 'role')
     list_filter = ('role', 'is_active')
+
+
+@admin.register(TrainerRecommendation)
+class TrainerRecommendationAdmin(admin.ModelAdmin):
+    list_display = ('trainer', 'user', 'fecha', 'leido')
+    list_filter = ('fecha', 'leido')
+    search_fields = ('trainer__username', 'user__username', 'mensaje')
+    ordering = ('-fecha',)

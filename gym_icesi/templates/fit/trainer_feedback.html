@@ -1,7 +1,98 @@
-{% extends 'base.html' %}{% block content %}
-<h2>Seguimiento a {{ tuser.username }}</h2>
-<h3>Progreso reciente</h3>
-<ul>{% for p in progress %}<li>{{ p.fecha }} – {{ p.routine.nombre }} (Esfuerzo {{ p.esfuerzo }})</li>{% empty %}<li>Sin registros</li>{% endfor %}</ul>
-<h3>Rutinas</h3>
-<ul>{% for r in routines %}<li>{{ r.nombre }}</li>{% empty %}<li>Sin rutinas</li>{% endfor %}</ul>
+{% extends 'base.html' %}
+{% block title %}Seguimiento de {{ tuser.username }} - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'trainer_assignees' %}" class="action-link">← Volver a mis asignados</a>
+</div>
+
+<div class="card">
+  <h2>👤 Seguimiento de {{ tuser.username }}</h2>
+  
+  {% if not assignment %}
+    <div class="alert alert-warning">
+      ⚠️ Este usuario no está asignado a ti actualmente.
+    </div>
+  {% endif %}
+
+  <div class="row" style="margin-top:2rem;">
+    <!-- Progreso Reciente -->
+    <div class="col">
+      <div class="card">
+        <h3>📊 Progreso Reciente</h3>
+        {% if progress %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Rutina</th>
+                <th>Esfuerzo</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in progress %}
+                <tr>
+                  <td>{{ p.fecha|date:"d/m/Y" }}</td>
+                  <td>{{ p.routine.nombre }}</td>
+                  <td>{{ p.esfuerzo }}/10</td>
+                  <td>
+                    <a href="{% url 'trainer_recommendation_create' tuser.pk %}?progress_id={{ p.pk }}" class="btn btn-sm btn-primary">
+                      💬 Recomendar
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="muted">No hay registros de progreso aún.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Rutinas -->
+    <div class="col">
+      <div class="card">
+        <h3>📋 Rutinas del Usuario</h3>
+        {% if routines %}
+          <ul class="routine-list">
+            {% for r in routines %}
+              <li style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid #e5e7eb;">
+                <div>
+                  <strong>{{ r.nombre }}</strong>
+                  <br>
+                  <small class="muted">{{ r.items.count }} ejercicio(s)</small>
+                </div>
+                <div>
+                  <a href="{% url 'routine_detail' r.pk %}" class="btn btn-sm">Ver</a>
+                  <a href="{% url 'trainer_recommendation_create' tuser.pk %}?routine_id={{ r.pk }}" class="btn btn-sm btn-primary">
+                    💬 Recomendar
+                  </a>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">No hay rutinas creadas aún.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recomendaciones Enviadas -->
+  {% if recommendations %}
+    <div class="card" style="margin-top:2rem;">
+      <h3>💬 Recomendaciones Enviadas</h3>
+      <ul>
+        {% for rec in recommendations %}
+          <li style="padding:0.5rem 0;border-bottom:1px solid #e5e7eb;">
+            <strong>{{ rec.fecha|date:"d/m/Y H:i" }}</strong>
+            <p style="margin:0.25rem 0;">{{ rec.mensaje|truncatewords:20 }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}

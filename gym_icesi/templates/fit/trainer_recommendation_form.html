@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Enviar Recomendación - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:700px;margin:0 auto;">
+  <h2>💬 Enviar Recomendación a {{ tuser.username }}</h2>
+  
+  {% if routine %}
+    <div class="alert alert-info" style="margin-bottom:1rem;">
+      <strong>Rutina:</strong> {{ routine.nombre }}
+    </div>
+  {% endif %}
+  
+  {% if progress %}
+    <div class="alert alert-info" style="margin-bottom:1rem;">
+      <strong>Progreso del:</strong> {{ progress.fecha|date:"d/m/Y" }}
+    </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    
+    <div class="form-group">
+      <label for="{{ form.mensaje.id_for_label }}">Mensaje de Recomendación *</label>
+      {{ form.mensaje }}
+      {% if form.mensaje.errors %}
+        <div class="error">{{ form.mensaje.errors }}</div>
+      {% endif %}
+      <small>Escribe recomendaciones específicas sobre la rutina o el progreso del usuario.</small>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary">Enviar Recomendación</button>
+      <a href="{% url 'trainer_feedback' tuser.pk %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

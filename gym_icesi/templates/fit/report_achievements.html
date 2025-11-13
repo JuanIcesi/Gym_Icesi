@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Logros y Metas - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>🏆 Logros y Metas</h2>
+  <p class="muted">Tu progreso y logros alcanzados</p>
+
+  <div class="stats-grid" style="margin-top:2rem;">
+    <div class="stat-card">
+      <span class="stat-icon">📋</span>
+      <div class="stat-value">{{ total_rutinas }}</div>
+      <div class="stat-label">Rutinas Creadas</div>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-icon">🔥</span>
+      <div class="stat-value">{{ total_sesiones }}</div>
+      <div class="stat-label">Sesiones Totales</div>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-icon">📅</span>
+      <div class="stat-value">{{ dias_consecutivos }}</div>
+      <div class="stat-label">Días Consecutivos</div>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-icon">💪</span>
+      <div class="stat-value">{{ mejor_esfuerzo }}/10</div>
+      <div class="stat-label">Mejor Esfuerzo</div>
+    </div>
+  </div>
+
+  {% if rutina_mas_usada %}
+    <div class="card" style="margin-top:2rem;background:#f0fdf4;">
+      <h3>⭐ Rutina Favorita</h3>
+      <p><strong>{{ rutina_mas_usada.routine__nombre }}</strong></p>
+      <p class="muted">Usada {{ rutina_mas_usada.veces }} vez{{ rutina_mas_usada.veces|pluralize:"es" }}</p>
+    </div>
+  {% endif %}
+
+  <div style="margin-top:2rem;text-align:center;">
+    <a href="{% url 'report_adherence' %}" class="btn">← Volver a Reportes</a>
+  </div>
+</div>
+{% endblock %}
+

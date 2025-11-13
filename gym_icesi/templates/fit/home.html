@@ -100,8 +100,20 @@
   <h3 style="color:white;">⚡ Acciones Rápidas</h3>
   <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
     <a href="{% url 'routine_create' %}" class="btn" style="background:white;color:#0b74de;">➕ Nueva Rutina</a>
+    <a href="{% url 'exercise_create' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;">💪 Crear Ejercicio</a>
     <a href="{% url 'progress_create' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;">✅ Registrar Progreso</a>
     <a href="{% url 'report_adherence' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;">📊 Ver Informes</a>
   </div>
 </div>
+
+<!-- Recomendaciones no leídas -->
+{% if unread_recommendations > 0 %}
+<div class="card" style="background:#fef3c7;border-color:#fde68a;margin-top:1.5rem;">
+  <h3 style="color:#92400e;">💬 Tienes {{ unread_recommendations }} recomendación{{ unread_recommendations|pluralize:"es" }} nueva{{ unread_recommendations|pluralize }}</h3>
+  <p style="color:#78350f;margin-bottom:1rem;">
+    Tu entrenador te ha enviado recomendaciones. ¡Revísalas para mejorar tu rendimiento!
+  </p>
+  <a href="{% url 'recommendations_list' %}" class="btn" style="background:#92400e;color:white;">Ver Recomendaciones</a>
+</div>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Tendencias de Progreso - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>📈 Tendencias de Progreso</h2>
+  <p class="muted">Evolución de tu actividad física en los últimos 3 meses</p>
+
+  {% if meses_datos %}
+    <table class="table" style="margin-top:2rem;">
+      <thead>
+        <tr>
+          <th>Mes</th>
+          <th>Sesiones</th>
+          <th>Esfuerzo Promedio</th>
+          <th>Rutinas Activas</th>
+          <th>Tendencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mes in meses_datos %}
+          <tr>
+            <td><strong>{{ mes.mes }}</strong></td>
+            <td>{{ mes.sesiones }}</td>
+            <td>{{ mes.esfuerzo_promedio }}/10</td>
+            <td>{{ mes.rutinas_activas }}</td>
+            <td>
+              {% if forloop.first %}
+                <span class="badge badge-success">Actual</span>
+              {% elif mes.sesiones > 0 %}
+                <span class="badge badge-primary">Activo</span>
+              {% else %}
+                <span class="badge">Sin datos</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <p>No hay datos suficientes para mostrar tendencias.</p>
+    </div>
+  {% endif %}
+
+  <div style="margin-top:2rem;text-align:center;">
+    <a href="{% url 'report_adherence' %}" class="btn">← Volver a Reportes</a>
+  </div>
+</div>
+{% endblock %}
+

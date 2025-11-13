@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load video_filters %}
 
 {% block title %}Detalle de rutina - {{ routine.nombre }}{% endblock %}
 
@@ -26,46 +27,75 @@
     <h3>Ejercicios de la rutina</h3>
 
     {% if items %}
-      <table class="table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Ejercicio</th>
-            <th>Tipo</th>
-            <th>Series</th>
-            <th>Reps</th>
-            <th>Tiempo (seg)</th>
-            <th>Notas</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for it in items %}
-            <tr>
-              <td>{{ it.orden }}</td>
-              <td>{{ it.exercise.nombre }}</td>
-              <td>{{ it.exercise.tipo }}</td>
-              <td>{{ it.series|default:"-" }}</td>
-              <td>{{ it.reps|default:"-" }}</td>
-              <td>{{ it.tiempo_seg|default:"-" }}</td>
-              <td>{{ it.notas|default:"-" }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="exercise-list">
+        {% for it in items %}
+          <div class="exercise-card">
+            <div class="exercise-header">
+              <div class="exercise-number">{{ it.orden }}</div>
+              <div class="exercise-info">
+                <h4>{{ it.exercise.nombre }}</h4>
+                <span class="badge badge-{{ it.exercise.tipo }}">{{ it.exercise.get_tipo_display }}</span>
+                {% if it.exercise.dificultad %}
+                  <span class="difficulty-badge">Dificultad: {{ it.exercise.dificultad }}/5</span>
+                {% endif %}
+              </div>
+            </div>
+            
+            {% if it.exercise.descripcion %}
+              <p class="exercise-description">{{ it.exercise.descripcion }}</p>
+            {% endif %}
+            
+            {% if it.exercise.video_url %}
+              <div class="exercise-video">
+                {% with video_id=it.exercise.video_url|youtube_id %}
+                  {% if video_id %}
+                    <div class="video-embed">
+                      <iframe width="100%" height="315" src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                  {% else %}
+                    <a href="{{ it.exercise.video_url }}" target="_blank" class="video-link">
+                      <span class="video-icon">▶️</span> Ver video demostrativo
+                    </a>
+                  {% endif %}
+                {% endwith %}
+              </div>
+            {% endif %}
+            
+            <div class="exercise-details">
+              <div class="detail-item">
+                <strong>Series:</strong> {{ it.series|default:"-" }}
+              </div>
+              <div class="detail-item">
+                <strong>Reps:</strong> {{ it.reps|default:"-" }}
+              </div>
+              <div class="detail-item">
+                <strong>Tiempo:</strong> {{ it.tiempo_seg|default:"-" }} seg
+              </div>
+              {% if it.notas %}
+                <div class="detail-item notes">
+                  <strong>Notas:</strong> {{ it.notas }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
     {% else %}
       <p class="muted">Esta rutina aún no tiene ejercicios.</p>
     {% endif %}
 
     <div class="actions" style="margin-top: 1rem;">
-      {% if routine.user == user and not routine.es_predisenada %}
+      {% if routine.user == user %}
         <a href="{% url 'routine_add_item' routine.pk %}" class="btn">
           ➕ Agregar ejercicio
         </a>
-      {% endif %}
-
-      {% if routine.es_predisenada and routine.user != user %}
-        <a href="{% url 'routine_adopt' routine.pk %}" class="btn">
+      {% elif routine.es_predisenada and routine.user != user %}
+        <a href="{% url 'routine_adopt' routine.pk %}" class="btn btn-success">
           📋 Adoptar esta rutina
+        </a>
+      {% elif routine.es_predisenada and routine.autor_trainer == user and user.is_staff %}
+        <a href="{% url 'routine_add_item' routine.pk %}" class="btn">
+          ➕ Agregar ejercicio
         </a>
       {% endif %}
 

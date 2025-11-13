@@ -18,12 +18,14 @@
           <a href="{% url 'home' %}">🏠 Dashboard</a>
           <a href="{% url 'routine_list' %}">📋 Rutinas</a>
           <a href="{% url 'progress_create' %}">✅ Progreso</a>
-          <a href="{% url 'report_adherence' %}">📊 Adherencia</a>
-          <a href="{% url 'report_load_balance' %}">📈 Carga</a>
+          <a href="{% url 'recommendations_list' %}">💬 Recomendaciones</a>
+          <a href="{% url 'report_adherence' %}">📊 Reportes</a>
 
           {# --- Sección visible para entrenadores (staff) --- #}
           {% if user.is_staff %}
             <a href="{% url 'trainer_assignees' %}">🏋️ Mis Asignados</a>
+            <a href="{% url 'trainer_routines' %}">📋 Mis Rutinas</a>
+            <a href="{% url 'trainer_exercises' %}">💪 Ejercicios</a>
             <a href="{% url 'trainers_list' %}">👥 Entrenadores</a>
           {% endif %}
 
@@ -44,17 +46,29 @@
     {% if messages %}
       <div class="messages">
         {% for m in messages %}
-          <div class="message">{{ m }}</div>
+          <div class="message message-{{ m.tags }}">
+            {% if m.tags == 'error' %}
+              <strong>⚠️ Error:</strong> {{ m }}
+            {% elif m.tags == 'success' %}
+              <strong>✅ Éxito:</strong> {{ m }}
+            {% elif m.tags == 'warning' %}
+              <strong>⚠️ Advertencia:</strong> {{ m }}
+            {% elif m.tags == 'info' %}
+              <strong>ℹ️ Información:</strong> {{ m }}
+            {% else %}
+              {{ m }}
+            {% endif %}
+          </div>
         {% endfor %}
       </div>
     {% endif %}
 
     {% block content %}{% endblock %}
   </main>
-
+  
   <footer class="site-footer">
     <div class="container">
-      <small>&copy; {% now "Y" %} Universidad Icesi - Bienestar Universitario | Gym Icesi</small>
+      <small>&copy; {% now "Y" %} Universidad Icesi - Bienestar Universitario | 💪 Gym Icesi</small>
     </div>
   </footer>
 

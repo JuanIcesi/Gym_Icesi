@@ -24,6 +24,13 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default-key")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
+# Configuración CSRF para desarrollo
+CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
+CSRF_COOKIE_SECURE = False  # False en desarrollo, True en producción con HTTPS
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = False  # False en desarrollo, True en producción con HTTPS
+SESSION_COOKIE_HTTPONLY = True
+
 # ----------------------------------------------------
 # Aplicaciones instaladas
 # ----------------------------------------------------
@@ -80,19 +87,35 @@ WSGI_APPLICATION = "gymsid.wsgi.application"
 # ----------------------------------------------------
 # Base de datos (config desde .env)
 # ----------------------------------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME": os.getenv("DB_NAME", BASE_DIR / "db.sqlite3"),
-        "USER": os.getenv("DB_USER", ""),
-        "PASSWORD": os.getenv("DB_PASSWORD", ""),
-        "HOST": os.getenv("DB_HOST", "127.0.0.1"),
-        "PORT": os.getenv("DB_PORT", "5432"),
-        "OPTIONS": {
-            "options": "-c client_encoding=UTF8",  # fuerza UTF-8
-        },
+# Si hay DB_NAME configurado, usa PostgreSQL
+# Si no, usa SQLite por defecto
+DB_NAME = os.getenv("DB_NAME", "")
+DB_ENGINE = os.getenv("DB_ENGINE", "")
+
+if DB_NAME and (DB_ENGINE == "django.db.backends.postgresql" or not DB_ENGINE):
+    # Configuración PostgreSQL (NeonDB o PostgreSQL local)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": DB_NAME,
+            "USER": os.getenv("DB_USER", ""),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "127.0.0.1"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+            "OPTIONS": {
+                "options": "-c client_encoding=UTF8",  # fuerza UTF-8
+            },
+            "CONN_MAX_AGE": 0,
+        }
     }
-}
+else:
+    # Configuración SQLite (por defecto para desarrollo)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ----------------------------------------------------
 # Validación de contraseñas
@@ -129,6 +152,21 @@ LOGOUT_REDIRECT_URL = "login"
 # Clave primaria por defecto
 # ----------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ----------------------------------------------------
+# Configuración MongoDB (NoSQL)
+# ----------------------------------------------------
+MONGODB_SETTINGS = {
+    "host": os.getenv("MONGODB_HOST", "localhost"),
+    "port": int(os.getenv("MONGODB_PORT", "27017")),
+    "db": os.getenv("MONGODB_DB", "gym_icesi"),
+    "username": os.getenv("MONGODB_USER", ""),
+    "password": os.getenv("MONGODB_PASSWORD", ""),
+    "authentication_source": os.getenv("MONGODB_AUTH_SOURCE", "admin"),
+}
+
+# Si no hay configuración de MongoDB, se puede usar sin autenticación (desarrollo local)
+MONGODB_ENABLED = os.getenv("MONGODB_ENABLED", "True") == "True"
 
 # ----------------------------------------------------
 # Backends de autenticación

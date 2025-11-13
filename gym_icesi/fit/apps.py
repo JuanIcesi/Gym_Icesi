@@ -4,3 +4,7 @@ from django.apps import AppConfig
 class FitConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'fit'
+    
+    def ready(self):
+        """Importa las señales cuando la app está lista"""
+        import fit.signals

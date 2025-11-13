@@ -23,10 +23,20 @@
 
   <div class="stat-card">
     <span class="stat-icon">🔥</span>
-    <div class="stat-value">
-      {% widthratio dias_activos 30 100 %}%
-    </div>
+    <div class="stat-value">{{ porcentaje_adherencia }}%</div>
     <div class="stat-label">Adherencia Mensual</div>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-icon">⚡</span>
+    <div class="stat-value">{{ esfuerzo_promedio }}/10</div>
+    <div class="stat-label">Esfuerzo Promedio</div>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-icon">📊</span>
+    <div class="stat-value">{{ total_sesiones }}</div>
+    <div class="stat-label">Total Sesiones</div>
   </div>
 </div>
 
@@ -101,9 +111,25 @@
   {% endif %}
 </div>
 
+<!-- Rutinas más usadas -->
+{% if rutinas_mas_usadas %}
+<div class="card" style="margin-top:1.5rem;">
+  <h3>⭐ Rutinas Más Utilizadas</h3>
+  <ul>
+    {% for rutina in rutinas_mas_usadas %}
+      <li style="padding:0.5rem 0;border-bottom:1px solid #e5e7eb;">
+        <strong>{{ rutina.routine__nombre }}</strong> - {{ rutina.veces }} vez{{ rutina.veces|pluralize:"es" }}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
 <!-- Navegación a otros reportes -->
 <div style="margin-top:2rem;text-align:center;">
   <a href="{% url 'report_load_balance' %}" class="btn">Ver Informe de Carga →</a>
+  <a href="{% url 'report_progress_trend' %}" class="btn" style="margin-left:0.5rem;">Ver Tendencias →</a>
+  <a href="{% url 'report_achievements' %}" class="btn" style="margin-left:0.5rem;">Ver Logros →</a>
   <a href="{% url 'home' %}" class="action-link" style="margin-left:1rem;">Volver al Dashboard</a>
 </div>
 {% endblock %}

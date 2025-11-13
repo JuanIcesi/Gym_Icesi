@@ -7,7 +7,10 @@
     <h1>📋 Mis Rutinas</h1>
     <p>Gestiona tus rutinas personalizadas y explora rutinas prediseñadas por entrenadores.</p>
   </div>
-  <a href="{% url 'routine_create' %}" class="btn btn-success">➕ Nueva Rutina</a>
+  <div style="display:flex;gap:1rem;">
+    <a href="{% url 'routine_create' %}" class="btn btn-success">➕ Nueva Rutina</a>
+    <a href="{% url 'exercise_create' %}" class="btn">💪 Crear Ejercicio Personalizado</a>
+  </div>
 </div>
 
 <div class="row">

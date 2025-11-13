@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Mis Rutinas Prediseñadas - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <h2>📋 Mis Rutinas Prediseñadas</h2>
+    <a href="{% url 'trainer_routine_create' %}" class="btn btn-success">➕ Crear Nueva Rutina</a>
+  </div>
+
+  {% if routines %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Fecha Creación</th>
+          <th>Ejercicios</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for routine in routines %}
+          <tr>
+            <td><strong>{{ routine.nombre }}</strong></td>
+            <td>{{ routine.fecha_creacion|date:"d/m/Y" }}</td>
+            <td>{{ routine.items.count }} ejercicio(s)</td>
+            <td>
+              <a href="{% url 'routine_detail' routine.pk %}" class="btn btn-sm">Ver</a>
+              {% if routine.items.count == 0 %}
+                <a href="{% url 'routine_add_item' routine.pk %}" class="btn btn-sm btn-primary">Agregar Ejercicios</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-state">
+      <p>No has creado rutinas prediseñadas aún.</p>
+      <a href="{% url 'trainer_routine_create' %}" class="btn">Crear Primera Rutina</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
