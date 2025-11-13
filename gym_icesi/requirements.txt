@@ -1,14 +1,5 @@
-# Framework principal
-Django==4.2.10
-
-# PostgreSQL
-psycopg2-binary==2.9.9
-
-# Manejo de variables de entorno
+Django==4.2.26
+psycopg2-binary==2.9.10
 python-dotenv==1.0.1
-
-# Seguridad y utilidades
 gunicorn==23.0.0
-
-# Render / producción
-whitenoise==6.6.0
+whitenoise==6.8.2
