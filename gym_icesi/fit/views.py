@@ -342,8 +342,8 @@ def trainer_feedback(request, user_id):
 @user_passes_test(is_admin)
 def trainers_list(request):
     """
-    Lista SOLO los entrenadores reales desde EMPLOYEES.
-    Filtramos por employee_type relacionado con entrenamiento.
+    Lista SOLO los entrenadores reales desde EMPLOYEES,
+    filtrando por employee_type = 'INSTRUCTOR'.
     """
     sql = """
         SELECT e.id,
@@ -353,7 +353,7 @@ def trainers_list(request):
                e.employee_type,
                e.contract_type
         FROM employees e
-        WHERE UPPER(e.employee_type) IN ('TRAINER', 'ENTRENADOR', 'ENTRENADOR PERSONAL')
+        WHERE UPPER(e.employee_type) = 'INSTRUCTOR'
         ORDER BY e.last_name, e.first_name
         LIMIT 200;
     """
@@ -375,6 +375,37 @@ def trainers_list(request):
     ]
 
     return render(request, "fit/trainers_list.html", {"trainers": trainers})
+
+
+@login_required
+def trainers_view(request):
+    """
+    Vista para cualquier usuario logueado:
+    muestra SOLO los empleados cuyo employee_type = 'INSTRUCTOR'.
+    """
+    trainers = []
+    with connection.cursor() as cur:
+        cur.execute("""
+            SELECT e.id,
+                   e.first_name,
+                   e.last_name,
+                   e.email,
+                   f.name AS faculty
+            FROM employees e
+            JOIN faculties f ON e.faculty_code = f.code
+            WHERE UPPER(e.employee_type) = 'INSTRUCTOR'
+            ORDER BY e.last_name, e.first_name;
+        """)
+        for (emp_id, fn, ln, email, faculty) in cur.fetchall():
+            trainers.append({
+                "id": emp_id,
+                "name": f"{fn} {ln}",
+                "email": email,
+                "faculty": faculty,
+            })
+
+    return render(request, "fit/trainers.html", {"trainers": trainers})
+
 
 
 # ------------------------------- Reportes/Admin ------------------------------
