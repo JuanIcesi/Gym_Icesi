@@ -1,6 +1,6 @@
 """
 Django settings for gymsid project.
-Generado por 'django-admin startproject'
+Generado por 'django-admin startproject' (Django 5.2.8)
 """
 
 from pathlib import Path
@@ -23,18 +23,13 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default-key")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# Para desarrollo y despliegue en Render (.onrender.com)
-ALLOWED_HOSTS = os.getenv(
-    "ALLOWED_HOSTS",
-    "127.0.0.1,localhost,.onrender.com"
-).split(",")
+# Hosts permitidos
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
-# Configuración CSRF para desarrollo
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "http://localhost:8000"]
-CSRF_COOKIE_SECURE = False  # False en desarrollo, True en producción con HTTPS
-CSRF_COOKIE_HTTPONLY = False
-SESSION_COOKIE_SECURE = False  # False en desarrollo, True en producción con HTTPS
-SESSION_COOKIE_HTTPONLY = True
+# En Render suelen setear RENDER_EXTERNAL_HOSTNAME
+render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if render_host and render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host)
 
 # ----------------------------------------------------
 # Aplicaciones instaladas
@@ -59,6 +54,8 @@ INSTALLED_APPS = [
 # ----------------------------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # WhiteNoise para servir estáticos en producción (Render)
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -82,7 +79,7 @@ TEMPLATES = [{
             "django.template.context_processors.request",
             "django.contrib.auth.context_processors.auth",
             "django.contrib.messages.context_processors.messages",
-            "fit.context_processors.nav_trainers",
+            "fit.context_processors.nav_trainers",  # menú dinámico de entrenadores
         ],
     },
 }]
@@ -92,35 +89,20 @@ WSGI_APPLICATION = "gymsid.wsgi.application"
 # ----------------------------------------------------
 # Base de datos (config desde .env)
 # ----------------------------------------------------
-# Si hay DB_NAME configurado, usa PostgreSQL
-# Si no, usa SQLite por defecto
-DB_NAME = os.getenv("DB_NAME", "")
-DB_ENGINE = os.getenv("DB_ENGINE", "")
-
-if DB_NAME and (DB_ENGINE == "django.db.backends.postgresql" or not DB_ENGINE):
-    # Configuración PostgreSQL (NeonDB o PostgreSQL local)
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": DB_NAME,
-            "USER": os.getenv("DB_USER", ""),
-            "PASSWORD": os.getenv("DB_PASSWORD", ""),
-            "HOST": os.getenv("DB_HOST", "127.0.0.1"),
-            "PORT": os.getenv("DB_PORT", "5432"),
-            "OPTIONS": {
-                "options": "-c client_encoding=UTF8",  # fuerza UTF-8
-            },
-            "CONN_MAX_AGE": 0,
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
+        "NAME": os.getenv("DB_NAME", "neondb"),
+        "USER": os.getenv("DB_USER", ""),
+        # usamos DB_PASS para ser consistente con tu .env local y en Render
+        "PASSWORD": os.getenv("DB_PASS", ""),
+        "HOST": os.getenv("DB_HOST", "127.0.0.1"),
+        "PORT": os.getenv("DB_PORT", "5432"),
+        "OPTIONS": {
+            "options": "-c client_encoding=UTF8",
+        },
     }
-else:
-    # Configuración SQLite (por defecto para desarrollo)
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+}
 
 # ----------------------------------------------------
 # Validación de contraseñas
@@ -143,13 +125,21 @@ USE_TZ = True
 # ----------------------------------------------------
 # Archivos estáticos
 # ----------------------------------------------------
-STATIC_URL = "static/"
+# URL pública de los estáticos
+STATIC_URL = "/static/"
 
-# Carpeta con estáticos de la app (para desarrollo)
+# Carpeta donde collectstatic deja todo (Render lee de aquí)
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Carpeta donde tú tienes tus archivos en desarrollo
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Carpeta donde collectstatic los copiará (para producción / Render)
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# Almacenamiento de estáticos (Django 4.2+ + WhiteNoise)
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # ----------------------------------------------------
 # Config de login/logout
@@ -162,21 +152,6 @@ LOGOUT_REDIRECT_URL = "login"
 # Clave primaria por defecto
 # ----------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# ----------------------------------------------------
-# Configuración MongoDB (NoSQL)
-# ----------------------------------------------------
-MONGODB_SETTINGS = {
-    "host": os.getenv("MONGODB_HOST", "localhost"),
-    "port": int(os.getenv("MONGODB_PORT", "27017")),
-    "db": os.getenv("MONGODB_DB", "gym_icesi"),
-    "username": os.getenv("MONGODB_USER", ""),
-    "password": os.getenv("MONGODB_PASSWORD", ""),
-    "authentication_source": os.getenv("MONGODB_AUTH_SOURCE", "admin"),
-}
-
-# Si no hay configuración de MongoDB, se puede usar sin autenticación (desarrollo local)
-MONGODB_ENABLED = os.getenv("MONGODB_ENABLED", "True") == "True"
 
 # ----------------------------------------------------
 # Backends de autenticación
