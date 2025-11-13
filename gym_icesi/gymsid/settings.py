@@ -1,6 +1,6 @@
 """
 Django settings for gymsid project.
-Generado por 'django-admin startproject' (Django 5.2.8)
+Generado por 'django-admin startproject'
 """
 
 from pathlib import Path
@@ -22,7 +22,12 @@ load_dotenv(BASE_DIR / ".env")
 # ----------------------------------------------------
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default-key")
 DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+
+# Para desarrollo y despliegue en Render (.onrender.com)
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    "127.0.0.1,localhost,.onrender.com"
+).split(",")
 
 # ----------------------------------------------------
 # Aplicaciones instaladas
@@ -70,7 +75,7 @@ TEMPLATES = [{
             "django.template.context_processors.request",
             "django.contrib.auth.context_processors.auth",
             "django.contrib.messages.context_processors.messages",
-            "fit.context_processors.nav_trainers",  # 👈 nuestro menú dinámico
+            "fit.context_processors.nav_trainers",
         ],
     },
 }]
@@ -83,13 +88,16 @@ WSGI_APPLICATION = "gymsid.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME": os.getenv("DB_NAME", BASE_DIR / "db.sqlite3"),
+        # Para desarrollo local podrías dejar sqlite como fallback:
+        # "NAME": os.getenv("DB_NAME", BASE_DIR / "db.sqlite3"),
+        "NAME": os.getenv("DB_NAME", "neondb"),
         "USER": os.getenv("DB_USER", ""),
-        "PASSWORD": os.getenv("DB_PASSWORD", ""),
+        # OJO: usamos DB_PASS para ser consistente con tu .env
+        "PASSWORD": os.getenv("DB_PASS", ""),
         "HOST": os.getenv("DB_HOST", "127.0.0.1"),
         "PORT": os.getenv("DB_PORT", "5432"),
         "OPTIONS": {
-            "options": "-c client_encoding=UTF8",  # fuerza UTF-8
+            "options": "-c client_encoding=UTF8",
         },
     }
 }
@@ -116,7 +124,12 @@ USE_TZ = True
 # Archivos estáticos
 # ----------------------------------------------------
 STATIC_URL = "static/"
+
+# Carpeta con estáticos de la app (para desarrollo)
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# Carpeta donde collectstatic los copiará (para producción / Render)
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ----------------------------------------------------
 # Config de login/logout
