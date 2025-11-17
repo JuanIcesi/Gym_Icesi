@@ -21,7 +21,14 @@ from .models import (
 )
 from .forms import RoutineForm, RoutineItemForm, ProgressForm, ExerciseForm, TrainerRecommendationForm
 from fit.institutional_models import InstitutionalUser
-from fit.mongodb_service import ProgressLogService, ActivityLogService, ExerciseDetailsService
+from fit.mongodb_service import (
+    ProgressLogService,
+    ActivityLogService,
+    ExerciseDetailsService,
+    ExerciseService,
+    RoutineService,
+    TrainerAssignmentService,
+)
 
 
 # ----------------------------- Aux institucional -----------------------------
@@ -150,7 +157,23 @@ def routine_create(request):
             r = form.save(commit=False)
             r.user = request.user
             r.save()
-            
+
+            # Guardar rutina en MongoDB (NoSQL) - Integración Dual
+            try:
+                trainer_id = r.autor_trainer.username if r.autor_trainer else None
+                RoutineService.save_user_routine(
+                    routine_id=r.id,
+                    user_id=request.user.username,
+                    nombre=r.nombre,
+                    descripcion=r.descripcion,
+                    es_predisenada=r.es_predisenada,
+                    trainer_id=trainer_id,
+                )
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"No se pudo guardar rutina en MongoDB: {e}")
+
             # Registrar actividad en MongoDB
             try:
                 ActivityLogService.log_activity(
@@ -163,7 +186,7 @@ def routine_create(request):
                 )
             except Exception:
                 pass
-            
+
             # Las estadísticas se actualizan automáticamente mediante señales
             messages.success(request, "Rutina creada.")
             return redirect("routine_detail", pk=r.pk)
@@ -673,11 +696,43 @@ def admin_assign_trainer(request):
         user = get_object_or_404(User, pk=user_id)
         trainer = get_object_or_404(User, pk=trainer_id, is_staff=True)
 
-        TrainerAssignment.objects.update_or_create(
+        assignment, created = TrainerAssignment.objects.update_or_create(
             user=user,
             activo=True,
             defaults={"trainer": trainer},
         )
+
+        # Guardar asignación en MongoDB (NoSQL) - Integración Dual
+        try:
+            TrainerAssignmentService.save_assignment(
+                assignment_id=assignment.id,
+                user_id=user.username,
+                trainer_id=trainer.username,
+                fecha_asignacion=assignment.fecha_asignacion,
+                activo=assignment.activo,
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"No se pudo guardar asignación en MongoDB: {e}")
+
+        # Registrar actividad en MongoDB
+        try:
+            ActivityLogService.log_activity(
+                user_id=request.user.username,
+                action="assign_trainer",
+                entity_type="trainer_assignment",
+                entity_id=assignment.id,
+                metadata={
+                    "user": user.username,
+                    "trainer": trainer.username,
+                    "created": created
+                },
+                request=request
+            )
+        except Exception:
+            pass
+
         messages.success(request, "Asignación guardada.")
         return redirect("admin_assign_trainer")
 
@@ -772,7 +827,25 @@ def exercise_create(request):
             exercise.creado_por = request.user
             exercise.es_personalizado = True
             exercise.save()
-            
+
+            # Guardar ejercicio en MongoDB (NoSQL) - Integración Dual
+            try:
+                ExerciseService.save_exercise(
+                    exercise_id=exercise.id,
+                    user_id=request.user.username,
+                    nombre=exercise.nombre,
+                    tipo=exercise.tipo,
+                    descripcion=exercise.descripcion,
+                    duracion_min=exercise.duracion_min,
+                    dificultad=exercise.dificultad,
+                    video_url=exercise.video_url,
+                    es_personalizado=exercise.es_personalizado,
+                )
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"No se pudo guardar ejercicio en MongoDB: {e}")
+
             # Guardar detalles extendidos en MongoDB
             try:
                 ExerciseDetailsService.save_exercise_details(
@@ -782,7 +855,7 @@ def exercise_create(request):
                 )
             except Exception:
                 pass
-            
+
             # Registrar actividad en MongoDB
             try:
                 ActivityLogService.log_activity(
@@ -795,7 +868,7 @@ def exercise_create(request):
                 )
             except Exception:
                 pass
-            
+
             messages.success(request, "Ejercicio creado exitosamente.")
             return redirect("routine_list")
     else:
@@ -844,7 +917,20 @@ def trainer_routine_create(request):
             routine.es_predisenada = True
             routine.autor_trainer = request.user
             routine.save()
-            
+
+            # Guardar plantilla de rutina en MongoDB (NoSQL) - Integración Dual
+            try:
+                RoutineService.save_routine_template(
+                    routine_id=routine.id,
+                    trainer_id=request.user.username,
+                    nombre=routine.nombre,
+                    descripcion=routine.descripcion,
+                )
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"No se pudo guardar plantilla en MongoDB: {e}")
+
             # Registrar actividad en MongoDB
             try:
                 ActivityLogService.log_activity(
@@ -857,7 +943,7 @@ def trainer_routine_create(request):
                 )
             except Exception:
                 pass
-            
+
             messages.success(request, "Rutina prediseñada creada. Ahora agrega ejercicios.")
             return redirect("routine_detail", pk=routine.pk)
     else:

@@ -84,10 +84,15 @@ WSGI_APPLICATION = "gymsid.wsgi.application"
 # ----------------------------------------------------
 # Base de datos (config desde .env)
 # ----------------------------------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME": os.getenv("DB_NAME", "neondb"),
+DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
+DB_CONFIG = {
+    "ENGINE": DB_ENGINE,
+    "NAME": os.getenv("DB_NAME", "neondb"),
+}
+
+# Solo agregar configuraciones adicionales si no es SQLite
+if "sqlite" not in DB_ENGINE:
+    DB_CONFIG.update({
         "USER": os.getenv("DB_USER", ""),
         "PASSWORD": os.getenv("DB_PASSWORD", ""),
         "HOST": os.getenv("DB_HOST", "127.0.0.1"),
@@ -95,7 +100,10 @@ DATABASES = {
         "OPTIONS": {
             "options": "-c client_encoding=UTF8",
         },
-    }
+    })
+
+DATABASES = {
+    "default": DB_CONFIG
 }
 
 # ----------------------------------------------------
@@ -162,4 +170,17 @@ LOGGING = {
         "handlers": ["console"],
         "level": "WARNING",
     },
+}
+
+# ----------------------------------------------------
+# MongoDB Configuration (NoSQL para datos del gimnasio)
+# ----------------------------------------------------
+MONGODB_ENABLED = os.getenv("MONGODB_ENABLED", "True") == "True"
+MONGODB_SETTINGS = {
+    "host": os.getenv("MONGODB_HOST", "clustergym.pxczpdo.mongodb.net"),
+    "port": int(os.getenv("MONGODB_PORT", "27017")),
+    "db": os.getenv("MONGODB_DB_NAME", "sid_gym_icesi"),
+    "username": os.getenv("MONGODB_USERNAME", "gym_user"),
+    "password": os.getenv("MONGODB_PASSWORD", "EKKLsiwKQjNJkBdu"),
+    "authentication_source": os.getenv("MONGODB_AUTH_SOURCE", "admin"),
 }

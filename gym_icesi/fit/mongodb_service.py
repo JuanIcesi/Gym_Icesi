@@ -15,7 +15,7 @@ except ImportError:
     ObjectId = None
 
 from django.conf import settings
-from datetime import datetime
+from datetime import datetime, date
 import logging
 import os
 
@@ -109,16 +109,16 @@ class ProgressLogService:
             return None
         
         db = MongoDBService.get_db()
-        if not db:
+        if db is None:
             return None
-        
+
         collection = db.progress_logs
         
         document = {
             "user_id": str(user_id),
             "routine_id": int(routine_id),
             "exercise_id": int(exercise_id) if exercise_id else None,
-            "fecha": datetime.combine(fecha, datetime.min.time()) if isinstance(fecha, datetime.date) else fecha,
+            "fecha": datetime.combine(fecha, datetime.min.time()) if isinstance(fecha, date) else fecha,
             "series_completadas": kwargs.get("series"),
             "reps_completadas": kwargs.get("reps"),
             "tiempo_segundos": kwargs.get("tiempo_seg"),
@@ -154,18 +154,18 @@ class ProgressLogService:
             return []
         
         db = MongoDBService.get_db()
-        if not db:
+        if db is None:
             return []
-        
+
         collection = db.progress_logs
         query = {"user_id": str(user_id)}
         
         if start_date or end_date:
             query["fecha"] = {}
             if start_date:
-                query["fecha"]["$gte"] = datetime.combine(start_date, datetime.min.time()) if isinstance(start_date, datetime.date) else start_date
+                query["fecha"]["$gte"] = datetime.combine(start_date, datetime.min.time()) if isinstance(start_date, date) else start_date
             if end_date:
-                query["fecha"]["$lte"] = datetime.combine(end_date, datetime.min.time()) if isinstance(end_date, datetime.date) else end_date
+                query["fecha"]["$lte"] = datetime.combine(end_date, datetime.min.time()) if isinstance(end_date, date) else end_date
         
         cursor = collection.find(query).sort("fecha", -1).limit(limit)
         return list(cursor)
@@ -191,9 +191,9 @@ class ActivityLogService:
             return None
         
         db = MongoDBService.get_db()
-        if not db:
+        if db is None:
             return None
-        
+
         collection = db.user_activity_logs
         
         document = {
@@ -219,25 +219,25 @@ class ActivityLogService:
 
 class ExerciseDetailsService:
     """Servicio para gestionar detalles extendidos de ejercicios"""
-    
+
     @staticmethod
     def save_exercise_details(exercise_id, **kwargs):
         """
         Guarda detalles extendidos de un ejercicio
-        
+
         Args:
             exercise_id: ID del ejercicio en PostgreSQL
             **kwargs: Datos adicionales (variaciones, consejos, equipamiento, etc.)
         """
         if not MongoDBService.is_available():
             return None
-        
+
         db = MongoDBService.get_db()
-        if not db:
+        if db is None:
             return None
-        
+
         collection = db.exercise_details
-        
+
         document = {
             "exercise_id": int(exercise_id),
             "variaciones": kwargs.get("variaciones", []),
@@ -250,28 +250,260 @@ class ExerciseDetailsService:
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
-        
+
         # Usar upsert para actualizar si existe o crear si no
         collection.create_index([("exercise_id", 1)], unique=True)
         collection.create_index([("tags", 1)])
-        
+
         result = collection.update_one(
             {"exercise_id": int(exercise_id)},
             {"$set": document},
             upsert=True
         )
         return result.upserted_id or exercise_id
-    
+
     @staticmethod
     def get_exercise_details(exercise_id):
         """Obtiene los detalles extendidos de un ejercicio"""
         if not MongoDBService.is_available():
             return None
-        
+
         db = MongoDBService.get_db()
-        if not db:
+        if db is None:
             return None
-        
+
         collection = db.exercise_details
         return collection.find_one({"exercise_id": int(exercise_id)})
+
+
+class ExerciseService:
+    """Servicio para gestionar ejercicios en MongoDB (complemento a BD relacional)"""
+
+    @staticmethod
+    def save_exercise(exercise_id, user_id, **kwargs):
+        """
+        Guarda información del ejercicio en MongoDB
+
+        Args:
+            exercise_id: ID del ejercicio en PostgreSQL
+            user_id: ID del usuario creador (username)
+            **kwargs: Datos adicionales del ejercicio
+        """
+        if not MongoDBService.is_available():
+            logger.warning("MongoDB no disponible, no se guardó ejercicio")
+            return None
+
+        db = MongoDBService.get_db()
+        if db is None:
+            return None
+
+        collection = db.exercises
+
+        document = {
+            "exercise_id": int(exercise_id),
+            "user_id": str(user_id) if user_id else None,
+            "nombre": kwargs.get("nombre", ""),
+            "tipo": kwargs.get("tipo", ""),
+            "descripcion": kwargs.get("descripcion", ""),
+            "duracion_min": kwargs.get("duracion_min", 0),
+            "dificultad": kwargs.get("dificultad", 1),
+            "video_url": kwargs.get("video_url", ""),
+            "es_personalizado": kwargs.get("es_personalizado", False),
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+
+        # Crear índices
+        collection.create_index([("exercise_id", 1)], unique=True)
+        collection.create_index([("user_id", 1), ("created_at", -1)])
+        collection.create_index([("tipo", 1)])
+
+        result = collection.update_one(
+            {"exercise_id": int(exercise_id)},
+            {"$set": document},
+            upsert=True
+        )
+        logger.info(f"Ejercicio guardado en MongoDB: {exercise_id}")
+        return result.upserted_id or exercise_id
+
+
+class RoutineService:
+    """Servicio para gestionar rutinas en MongoDB (complemento a BD relacional)"""
+
+    @staticmethod
+    def save_user_routine(routine_id, user_id, **kwargs):
+        """
+        Guarda información de rutina de usuario en MongoDB
+
+        Args:
+            routine_id: ID de la rutina en PostgreSQL
+            user_id: ID del usuario (username)
+            **kwargs: Datos adicionales
+        """
+        if not MongoDBService.is_available():
+            logger.warning("MongoDB no disponible, no se guardó rutina")
+            return None
+
+        db = MongoDBService.get_db()
+        if db is None:
+            return None
+
+        collection = db.user_routines
+
+        document = {
+            "routine_id": int(routine_id),
+            "user_id": str(user_id),
+            "nombre": kwargs.get("nombre", ""),
+            "descripcion": kwargs.get("descripcion", ""),
+            "es_predisenada": kwargs.get("es_predisenada", False),
+            "trainer_id": str(kwargs.get("trainer_id")) if kwargs.get("trainer_id") else None,
+            "exercises": kwargs.get("exercises", []),  # Lista de exercise_ids
+            "items_detalle": kwargs.get("items_detalle", []),  # Detalle de items
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+
+        # Crear índices
+        collection.create_index([("routine_id", 1)], unique=True)
+        collection.create_index([("user_id", 1), ("created_at", -1)])
+        collection.create_index([("trainer_id", 1)])
+
+        result = collection.update_one(
+            {"routine_id": int(routine_id)},
+            {"$set": document},
+            upsert=True
+        )
+        logger.info(f"Rutina de usuario guardada en MongoDB: {routine_id}")
+        return result.upserted_id or routine_id
+
+    @staticmethod
+    def save_routine_template(routine_id, trainer_id, **kwargs):
+        """
+        Guarda plantilla de rutina prediseñada en MongoDB
+
+        Args:
+            routine_id: ID de la rutina en PostgreSQL
+            trainer_id: ID del entrenador creador (username)
+            **kwargs: Datos adicionales
+        """
+        if not MongoDBService.is_available():
+            logger.warning("MongoDB no disponible, no se guardó plantilla")
+            return None
+
+        db = MongoDBService.get_db()
+        if db is None:
+            return None
+
+        collection = db.routine_templates
+
+        document = {
+            "routine_id": int(routine_id),
+            "trainer_id": str(trainer_id),
+            "nombre": kwargs.get("nombre", ""),
+            "descripcion": kwargs.get("descripcion", ""),
+            "nivel_recomendado": kwargs.get("nivel_recomendado", ""),
+            "objetivo": kwargs.get("objetivo", ""),
+            "duracion_estimada_min": kwargs.get("duracion_estimada_min", 0),
+            "exercises": kwargs.get("exercises", []),
+            "items_detalle": kwargs.get("items_detalle", []),
+            "veces_adoptada": kwargs.get("veces_adoptada", 0),
+            "tags": kwargs.get("tags", []),
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+
+        # Crear índices
+        collection.create_index([("routine_id", 1)], unique=True)
+        collection.create_index([("trainer_id", 1), ("created_at", -1)])
+        collection.create_index([("tags", 1)])
+
+        result = collection.update_one(
+            {"routine_id": int(routine_id)},
+            {"$set": document},
+            upsert=True
+        )
+        logger.info(f"Plantilla de rutina guardada en MongoDB: {routine_id}")
+        return result.upserted_id or routine_id
+
+    @staticmethod
+    def get_user_routines(user_id, limit=50):
+        """Obtiene las rutinas de un usuario desde MongoDB"""
+        if not MongoDBService.is_available():
+            return []
+
+        db = MongoDBService.get_db()
+        if db is None:
+            return []
+
+        collection = db.user_routines
+        cursor = collection.find({"user_id": str(user_id)}).sort("created_at", -1).limit(limit)
+        return list(cursor)
+
+
+class TrainerAssignmentService:
+    """Servicio para gestionar asignaciones de entrenadores en MongoDB"""
+
+    @staticmethod
+    def save_assignment(assignment_id, user_id, trainer_id, **kwargs):
+        """
+        Guarda asignación de entrenador en MongoDB
+
+        Args:
+            assignment_id: ID de la asignación en PostgreSQL
+            user_id: ID del usuario (username)
+            trainer_id: ID del entrenador (username)
+            **kwargs: Datos adicionales
+        """
+        if not MongoDBService.is_available():
+            logger.warning("MongoDB no disponible, no se guardó asignación")
+            return None
+
+        db = MongoDBService.get_db()
+        if db is None:
+            return None
+
+        collection = db.trainer_assignments
+
+        document = {
+            "assignment_id": int(assignment_id),
+            "user_id": str(user_id),
+            "trainer_id": str(trainer_id),
+            "fecha_asignacion": kwargs.get("fecha_asignacion", datetime.utcnow()),
+            "activo": kwargs.get("activo", True),
+            "notas": kwargs.get("notas", ""),
+            "objetivos": kwargs.get("objetivos", []),
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+
+        # Crear índices
+        collection.create_index([("assignment_id", 1)], unique=True)
+        collection.create_index([("user_id", 1), ("activo", 1)])
+        collection.create_index([("trainer_id", 1), ("activo", 1)])
+
+        result = collection.update_one(
+            {"assignment_id": int(assignment_id)},
+            {"$set": document},
+            upsert=True
+        )
+        logger.info(f"Asignación de entrenador guardada en MongoDB: {assignment_id}")
+        return result.upserted_id or assignment_id
+
+    @staticmethod
+    def get_trainer_assignees(trainer_id, active_only=True):
+        """Obtiene los usuarios asignados a un entrenador"""
+        if not MongoDBService.is_available():
+            return []
+
+        db = MongoDBService.get_db()
+        if db is None:
+            return []
+
+        collection = db.trainer_assignments
+        query = {"trainer_id": str(trainer_id)}
+        if active_only:
+            query["activo"] = True
+
+        cursor = collection.find(query).sort("fecha_asignacion", -1)
+        return list(cursor)
 
