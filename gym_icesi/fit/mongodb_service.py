@@ -35,13 +35,12 @@ class MongoDBService:
             try:
                 config = settings.MONGODB_SETTINGS
                 
-                # Verificar si hay connection string completa (para Atlas)
-                connection_string = os.getenv("MONGODB_CONNECTION_STRING", "")
+                # PRIORIDAD: Verificar si hay connection string completa (para Atlas)
+                connection_string = os.getenv("MONGODB_CONNECTION_STRING", "").strip()
                 if connection_string:
-                    # Reemplazar <password> si existe
-                    if "<password>" in connection_string and config.get("password"):
-                        connection_string = connection_string.replace("<password>", config["password"])
+                    # Usar la connection string directamente (ya viene completa con credenciales)
                     uri = connection_string
+                    logger.info("Usando MONGODB_CONNECTION_STRING completa")
                 else:
                     # Construir URI de conexión manualmente
                     if config.get("username") and config.get("password"):
