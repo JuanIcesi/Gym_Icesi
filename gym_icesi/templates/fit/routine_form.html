@@ -32,6 +32,35 @@
       <small>Describe el objetivo o enfoque de esta rutina</small>
     </div>
 
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+      <div class="form-group">
+        <label for="id_frecuencia">Frecuencia</label>
+        {{ form.frecuencia }}
+        {% if form.frecuencia.errors %}
+          <div class="error">{{ form.frecuencia.errors }}</div>
+        {% endif %}
+        <small>Con qué frecuencia realizarás esta rutina</small>
+      </div>
+
+      <div class="form-group">
+        <label for="id_dias_semana">Días de la Semana (opcional)</label>
+        {{ form.dias_semana }}
+        {% if form.dias_semana.errors %}
+          <div class="error">{{ form.dias_semana.errors }}</div>
+        {% endif %}
+        <small>Ej: L,M,J,V (Lunes, Martes, Jueves, Viernes)</small>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:1rem;">
+      <label for="id_meta_personal">Meta Personal (opcional)</label>
+      {{ form.meta_personal }}
+      {% if form.meta_personal.errors %}
+        <div class="error">{{ form.meta_personal.errors }}</div>
+      {% endif %}
+      <small>Define tus metas personales para esta rutina</small>
+    </div>
+
     <div style="display:flex;gap:1rem;margin-top:2rem;">
       <button type="submit" class="btn btn-success" style="flex:1;">✓ Crear Rutina</button>
       <a href="{% url 'routine_list' %}" class="btn" style="background:#e5e7eb;color:#374151;flex:1;text-align:center;">Cancelar</a>

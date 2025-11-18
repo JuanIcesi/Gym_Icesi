@@ -2,68 +2,201 @@
 {% block title %}{{ title|default:"Crear Ejercicio" }} - Gym Icesi{% endblock %}
 
 {% block content %}
-<div class="card">
-  <h2>{{ title|default:"Crear Ejercicio" }}</h2>
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'trainer_exercises' %}" class="btn btn-secondary">← Volver a Ejercicios</a>
+</div>
+
+<div class="card" style="max-width:1000px;margin:0 auto;">
+  <h2 style="margin:0 0 0.5rem 0;">{{ title|default:"💪 Crear Ejercicio" }}</h2>
+  <p style="color:#6b7280;margin:0 0 1.5rem 0;">
+    Completa toda la información del ejercicio para que los usuarios puedan realizarlo correctamente.
+  </p>
   
   <form method="post">
     {% csrf_token %}
     
-    <div class="form-group">
-      <label for="{{ form.nombre.id_for_label }}">Nombre del Ejercicio *</label>
-      {{ form.nombre }}
-      {% if form.nombre.errors %}
-        <div class="error">{{ form.nombre.errors }}</div>
-      {% endif %}
-    </div>
+    <!-- Información Básica -->
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">
+      <h3 style="margin:0 0 1rem 0;color:#0369a1;">📋 Información Básica</h3>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+        <div>
+          <label for="{{ form.nombre.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+            Nombre del Ejercicio <span style="color:#ef4444;">*</span>
+          </label>
+          {{ form.nombre }}
+          {% if form.nombre.errors %}
+            <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+              {{ form.nombre.errors }}
+            </div>
+          {% endif %}
+        </div>
 
-    <div class="form-group">
-      <label for="{{ form.tipo.id_for_label }}">Tipo *</label>
-      {{ form.tipo }}
-      {% if form.tipo.errors %}
-        <div class="error">{{ form.tipo.errors }}</div>
-      {% endif %}
-    </div>
-
-    <div class="form-group">
-      <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
-      {{ form.descripcion }}
-      {% if form.descripcion.errors %}
-        <div class="error">{{ form.descripcion.errors }}</div>
-      {% endif %}
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label for="{{ form.duracion_min.id_for_label }}">Duración (minutos)</label>
-        {{ form.duracion_min }}
-        {% if form.duracion_min.errors %}
-          <div class="error">{{ form.duracion_min.errors }}</div>
-        {% endif %}
+        <div>
+          <label for="{{ form.tipo.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+            Tipo <span style="color:#ef4444;">*</span>
+          </label>
+          {{ form.tipo }}
+          {% if form.tipo.errors %}
+            <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+              {{ form.tipo.errors }}
+            </div>
+          {% endif %}
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="{{ form.dificultad.id_for_label }}">Dificultad (1-5)</label>
-        {{ form.dificultad }}
-        {% if form.dificultad.errors %}
-          <div class="error">{{ form.dificultad.errors }}</div>
+      <div style="margin-bottom:1rem;">
+        <label for="{{ form.descripcion.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          Descripción General
+        </label>
+        {{ form.descripcion }}
+        {% if form.descripcion.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.descripcion.errors }}
+          </div>
         {% endif %}
+        <small style="color:#6b7280;">Descripción general del ejercicio y su propósito</small>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+        <div>
+          <label for="{{ form.duracion_min.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+            Duración (minutos)
+          </label>
+          {{ form.duracion_min }}
+          {% if form.duracion_min.errors %}
+            <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+              {{ form.duracion_min.errors }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.dificultad.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+            Dificultad (1-5)
+          </label>
+          {{ form.dificultad }}
+          {% if form.dificultad.errors %}
+            <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+              {{ form.dificultad.errors }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.video_url.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+            URL del Video
+          </label>
+          {{ form.video_url }}
+          {% if form.video_url.errors %}
+            <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+              {{ form.video_url.errors }}
+            </div>
+          {% endif %}
+          <small style="color:#6b7280;">Enlace a video demostrativo (YouTube, etc.)</small>
+        </div>
       </div>
     </div>
 
-    <div class="form-group">
-      <label for="{{ form.video_url.id_for_label }}">URL del Video (opcional)</label>
-      {{ form.video_url }}
-      {% if form.video_url.errors %}
-        <div class="error">{{ form.video_url.errors }}</div>
-      {% endif %}
-      <small>Pega el enlace de YouTube o cualquier video demostrativo</small>
+    <!-- Información Técnica Avanzada -->
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">
+      <h3 style="margin:0 0 1rem 0;color:#065f46;">🔬 Información Técnica</h3>
+      
+      <div style="margin-bottom:1rem;">
+        <label for="{{ form.instrucciones_paso_a_paso.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          📝 Instrucciones Paso a Paso
+        </label>
+        {{ form.instrucciones_paso_a_paso }}
+        {% if form.instrucciones_paso_a_paso.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.instrucciones_paso_a_paso.errors }}
+          </div>
+        {% endif %}
+        <small style="color:#6b7280;">Describe paso a paso cómo realizar el ejercicio correctamente</small>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+        <div>
+          <label for="{{ form.musculos_involucrados.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+            💪 Músculos Involucrados
+          </label>
+          {{ form.musculos_involucrados }}
+          {% if form.musculos_involucrados.errors %}
+            <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+              {{ form.musculos_involucrados.errors }}
+            </div>
+          {% endif %}
+          <small style="color:#6b7280;">Ej: Cuádriceps, Glúteos, Isquiotibiales</small>
+        </div>
+
+        <div>
+          <label for="{{ form.equipamiento_necesario.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+            🏋️ Equipamiento Necesario
+          </label>
+          {{ form.equipamiento_necesario }}
+          {% if form.equipamiento_necesario.errors %}
+            <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+              {{ form.equipamiento_necesario.errors }}
+            </div>
+          {% endif %}
+          <small style="color:#6b7280;">Ej: Mancuernas, Banco, Barra, Colchoneta</small>
+        </div>
+      </div>
     </div>
 
-    <div class="actions">
-      <button type="submit" class="btn btn-primary">Guardar Ejercicio</button>
-      <a href="{% url 'routine_list' %}" class="btn btn-secondary">Cancelar</a>
+    <!-- Precauciones y Contraindicaciones -->
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">
+      <h3 style="margin:0 0 1rem 0;color:#92400e;">⚠️ Precauciones y Seguridad</h3>
+      
+      <div style="margin-bottom:1rem;">
+        <label for="{{ form.precauciones.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          ⚠️ Precauciones
+        </label>
+        {{ form.precauciones }}
+        {% if form.precauciones.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.precauciones.errors }}
+          </div>
+        {% endif %}
+        <small style="color:#6b7280;">Precauciones importantes al realizar este ejercicio</small>
+      </div>
+
+      <div style="margin-bottom:1rem;">
+        <label for="{{ form.contraindicaciones.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          🚫 Contraindicaciones
+        </label>
+        {{ form.contraindicaciones }}
+        {% if form.contraindicaciones.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.contraindicaciones.errors }}
+          </div>
+        {% endif %}
+        <small style="color:#6b7280;">Situaciones médicas o condiciones donde NO se debe realizar este ejercicio</small>
+      </div>
+    </div>
+
+    <!-- Variaciones -->
+    <div style="background:#f3e8ff;border:1px solid #e9d5ff;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">
+      <h3 style="margin:0 0 1rem 0;color:#7c3aed;">🔄 Variaciones del Ejercicio</h3>
+      
+      <div>
+        <label for="{{ form.variaciones.id_for_label }}" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          📐 Variaciones
+        </label>
+        {{ form.variaciones }}
+        {% if form.variaciones.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.variaciones.errors }}
+          </div>
+        {% endif %}
+        <small style="color:#6b7280;">Variaciones del ejercicio para diferentes niveles (principiante, intermedio, avanzado)</small>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:1rem;margin-top:2rem;">
+      <button type="submit" class="btn btn-primary" style="flex:1;">💾 Guardar Ejercicio</button>
+      <a href="{% url 'trainer_exercises' %}" class="btn btn-secondary" style="flex:1;text-align:center;">Cancelar</a>
     </div>
   </form>
 </div>
 {% endblock %}
-

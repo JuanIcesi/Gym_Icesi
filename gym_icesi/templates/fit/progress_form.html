@@ -76,6 +76,21 @@
     </div>
 
     <div style="margin-bottom:1rem;">
+      <label for="id_peso_usado" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        ⚖️ Peso Utilizado (kg)
+      </label>
+      {{ form.peso_usado }}
+      <p style="font-size:0.85rem;color:#6b7280;margin:0.25rem 0 0 0;">
+        Peso total utilizado durante el entrenamiento (opcional)
+      </p>
+      {% if form.peso_usado.errors %}
+        <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+          {{ form.peso_usado.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="margin-bottom:1rem;">
       <label for="id_esfuerzo" style="display:block;margin-bottom:0.5rem;font-weight:500;">
         💪 Nivel de Esfuerzo (1-10) <span style="color:#ef4444;">*</span>
       </label>

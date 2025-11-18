@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Perfil de Salud - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+</div>
+
+<div class="card" style="max-width:800px;margin:0 auto;">
+  <div style="margin-bottom:1.5rem;">
+    <h2 style="margin:0 0 0.5rem 0;">🏥 Perfil de Salud</h2>
+    <p style="color:#6b7280;margin:0;">
+      Configura tu perfil de salud para un mejor seguimiento personalizado.
+    </p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div>
+        <label for="id_peso_kg" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          ⚖️ Peso (kg)
+        </label>
+        {{ form.peso_kg }}
+        {% if form.peso_kg.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.peso_kg.errors }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="id_altura_cm" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          📏 Altura (cm)
+        </label>
+        {{ form.altura_cm }}
+        {% if form.altura_cm.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.altura_cm.errors }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label for="id_condiciones_medicas" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        🩺 Condiciones Médicas
+      </label>
+      {{ form.condiciones_medicas }}
+      {% if form.condiciones_medicas.errors %}
+        <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+          {{ form.condiciones_medicas.errors }}
+        </div>
+      {% endif %}
+      <small style="color:#6b7280;">Información sobre lesiones, condiciones médicas o limitaciones físicas (opcional)</small>
+    </div>
+
+    {% if profile.peso_kg and profile.altura_cm %}
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+      <h4 style="margin:0 0 0.5rem 0;color:#0369a1;">📊 Información de Salud</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div>
+          <strong style="color:#0369a1;font-size:0.85rem;">Peso:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;">{{ profile.peso_kg }} kg</p>
+        </div>
+        <div>
+          <strong style="color:#0369a1;font-size:0.85rem;">Altura:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;">{{ profile.altura_cm }} cm</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div style="display:flex;gap:1rem;">
+      <button type="submit" class="btn btn-primary">💾 Guardar Perfil</button>
+      <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

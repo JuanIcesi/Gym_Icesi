@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Mensaje - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'messages_list' %}" class="btn btn-secondary">← Volver a Mensajería</a>
+</div>
+
+<div class="card" style="max-width:800px;margin:0 auto;">
+  <div style="padding-bottom:1rem;border-bottom:2px solid #e5e7eb;margin-bottom:1.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+      <div>
+        <h2 style="margin:0 0 0.5rem 0;">{{ message.asunto }}</h2>
+        <div style="color:#6b7280;">
+          {% if message.remitente == user %}
+            <strong>Para:</strong> {{ message.destinatario.username }}
+          {% else %}
+            <strong>De:</strong> {{ message.remitente.username }}
+          {% endif %}
+          | <strong>Fecha:</strong> {{ message.fecha|date:"d M Y H:i" }}
+        </div>
+      </div>
+      {% if not message.leido and message.destinatario == user %}
+        <span class="badge badge-primary">Nuevo</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="margin-bottom:1.5rem;">
+    <p style="white-space:pre-wrap;line-height:1.6;color:#111827;">{{ message.mensaje }}</p>
+  </div>
+
+  {% if message.relacionado_routine %}
+  <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+    <strong style="color:#0369a1;">📋 Rutina relacionada:</strong>
+    <a href="{% url 'routine_detail' message.relacionado_routine.pk %}" style="color:#0369a1;text-decoration:underline;">
+      {{ message.relacionado_routine.nombre }}
+    </a>
+  </div>
+  {% endif %}
+
+  {% if message.relacionado_progress %}
+  <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+    <strong style="color:#0369a1;">📊 Progreso relacionado:</strong>
+    <span style="color:#0369a1;">
+      {{ message.relacionado_progress.routine.nombre }} - {{ message.relacionado_progress.fecha|date:"d M Y" }}
+    </span>
+  </div>
+  {% endif %}
+
+  {% if message.destinatario == user %}
+  <div style="margin-top:1.5rem;">
+    <a href="{% url 'message_create' %}?destinatario={{ message.remitente.id }}" class="btn btn-primary">↩️ Responder</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}{{ espacio.nombre }} - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'espacios_list' %}" class="btn btn-secondary">← Volver a Espacios</a>
+</div>
+
+<div class="card" style="max-width:900px;margin:0 auto;">
+  <div style="margin-bottom:1.5rem;">
+    <h2 style="margin:0 0 0.5rem 0;">{{ espacio.nombre }}</h2>
+    <span class="badge" style="background:#e0e7ff;color:#4338ca;">{{ espacio.get_tipo_display }}</span>
+  </div>
+
+  {% if espacio.descripcion %}
+  <div style="margin-bottom:1.5rem;">
+    <h4 style="margin:0 0 0.5rem 0;color:#6b7280;">📝 Descripción</h4>
+    <p style="white-space:pre-wrap;line-height:1.6;color:#111827;">{{ espacio.descripcion }}</p>
+  </div>
+  {% endif %}
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+    {% if espacio.ubicacion %}
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1rem;">
+      <strong style="color:#0369a1;display:block;margin-bottom:0.5rem;">📍 Ubicación</strong>
+      <p style="margin:0;color:#111827;">{{ espacio.ubicacion }}</p>
+    </div>
+    {% endif %}
+    {% if espacio.capacidad %}
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1rem;">
+      <strong style="color:#0369a1;display:block;margin-bottom:0.5rem;">👥 Capacidad</strong>
+      <p style="margin:0;color:#111827;">{{ espacio.capacidad }} personas</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="margin-bottom:1.5rem;">
+    <h4 style="margin:0 0 1rem 0;">📅 Reservas Próximas</h4>
+    {% if reservas %}
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        {% for reserva in reservas %}
+          <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid {% if reserva.estado == 'confirmada' %}#10b981{% elif reserva.estado == 'pendiente' %}#f59e0b{% else %}#ef4444{% endif %};">
+            <div style="display:flex;justify-content:space-between;align-items:start;">
+              <div>
+                <strong style="color:#111827;">{{ reserva.fecha_reserva|date:"l, d M Y" }}</strong>
+                <div style="color:#6b7280;font-size:0.9rem;margin-top:0.25rem;">
+                  ⏰ {{ reserva.hora_inicio|time:"H:i" }} - {{ reserva.hora_fin|time:"H:i" }}
+                  | Por: {{ reserva.usuario.username }}
+                </div>
+              </div>
+              <span class="badge" style="background:{% if reserva.estado == 'confirmada' %}#d1fae5{% elif reserva.estado == 'pendiente' %}#fef3c7{% else %}#fee2e2{% endif %};color:{% if reserva.estado == 'confirmada' %}#065f46{% elif reserva.estado == 'pendiente' %}#92400e{% else %}#991b1b{% endif %};">
+                {{ reserva.get_estado_display }}
+              </span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No hay reservas programadas para este espacio.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div style="margin-top:1.5rem;">
+    <a href="{% url 'reserva_create_espacio' espacio.pk %}" class="btn btn-primary">📅 Reservar este Espacio</a>
+  </div>
+</div>
+{% endblock %}
+

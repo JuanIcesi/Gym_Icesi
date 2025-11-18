@@ -22,9 +22,12 @@
             <a href="{% url 'exercises_list' %}">💪 Ejercicios</a>
             <a href="{% url 'progress_list' %}">✅ Progreso</a>
             <a href="{% url 'report_progress' %}">📊 Informes</a>
+            <a href="{% url 'eventos_list' %}">📅 Eventos</a>
+            <a href="{% url 'espacios_list' %}">🏋️ Espacios</a>
             {% comment %} Mostrar "Mi Entrenador" solo si tiene uno asignado {% endcomment %}
             {% if has_trainer %}
               <a href="{% url 'trainers_view' %}">🏋️ Mi Entrenador</a>
+              <a href="{% url 'messages_list' %}">💬 Mensajes</a>
             {% endif %}
           {% endif %}
 
@@ -39,8 +42,11 @@
           {# --- Menú para Administrador (superuser) --- #}
           {% if user.is_superuser %}
             <a href="{% url 'home' %}">🏠 Inicio</a>
-            <a href="{% url 'admin_assign_trainer' %}">👥 Asignaciones</a>
-            <a href="{% url 'home' %}">📊 Informes Globales</a>
+            <a href="{% url 'admin_users_management' %}">👥 Usuarios</a>
+            <a href="{% url 'admin_assign_trainer_advanced' %}">👥 Asignaciones</a>
+            <a href="{% url 'admin_content_moderation' %}">🛡️ Moderación</a>
+            <a href="{% url 'admin_analytics' %}">📊 Analytics</a>
+            <a href="{% url 'admin_system_config' %}">⚙️ Config</a>
           {% endif %}
 
           {# --- Menú común para todos los usuarios autenticados --- #}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Configuración del Sistema - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+</div>
+
+<div style="margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e5e7eb;">
+  <h1 style="margin:0 0 0.5rem 0;">⚙️ Configuración del Sistema</h1>
+  <p style="color:#6b7280;margin:0;">Gestiona parámetros globales y políticas del sistema</p>
+</div>
+
+<!-- Formulario para Crear/Editar Configuración -->
+<div class="card" style="margin-bottom:2rem;">
+  <h3 style="margin:0 0 1rem 0;">➕ Nueva Configuración</h3>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="accion" value="crear">
+    
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1rem;margin-bottom:1rem;">
+      <div>
+        <label for="clave" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          Clave <span style="color:#ef4444;">*</span>
+        </label>
+        <input type="text" name="clave" id="clave" class="form-control" placeholder="Ej: max_users_per_trainer" required>
+        <small style="color:#6b7280;">Identificador único de la configuración</small>
+      </div>
+      
+      <div>
+        <label for="valor" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          Valor <span style="color:#ef4444;">*</span>
+        </label>
+        <input type="text" name="valor" id="valor" class="form-control" placeholder="Ej: 15" required>
+        <small style="color:#6b7280;">Valor de la configuración</small>
+      </div>
+    </div>
+    
+    <div style="margin-bottom:1rem;">
+      <label for="descripcion" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        Descripción
+      </label>
+      <textarea name="descripcion" id="descripcion" rows="2" class="form-control" placeholder="Descripción de qué hace esta configuración..."></textarea>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">💾 Guardar Configuración</button>
+  </form>
+</div>
+
+<!-- Lista de Configuraciones Existentes -->
+<div class="card">
+  <h3 style="margin:0 0 1rem 0;">📋 Configuraciones del Sistema</h3>
+  {% if configs %}
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Clave</th>
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Valor</th>
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Descripción</th>
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Última Actualización</th>
+            <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for config in configs %}
+            <tr style="border-bottom:1px solid #e5e7eb;">
+              <td style="padding:0.75rem;">
+                <strong style="color:#111827;">{{ config.clave }}</strong>
+              </td>
+              <td style="padding:0.75rem;color:#111827;">{{ config.valor }}</td>
+              <td style="padding:0.75rem;color:#6b7280;font-size:0.9rem;">
+                {{ config.descripcion|default:"-" }}
+              </td>
+              <td style="padding:0.75rem;color:#6b7280;font-size:0.85rem;">
+                {{ config.fecha_actualizacion|date:"d M Y H:i" }}
+              </td>
+              <td style="padding:0.75rem;text-align:center;">
+                <form method="post" style="display:inline;" onsubmit="return confirm('¿Eliminar esta configuración?');">
+                  {% csrf_token %}
+                  <input type="hidden" name="accion" value="eliminar">
+                  <input type="hidden" name="config_id" value="{{ config.id }}">
+                  <button type="submit" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;">🗑️ Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No hay configuraciones definidas aún.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Configuraciones Predefinidas Sugeridas -->
+<div class="card" style="background:#f0f9ff;border:1px solid #bae6fd;margin-top:2rem;">
+  <h3 style="margin:0 0 1rem 0;color:#0369a1;">💡 Configuraciones Sugeridas</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:1rem;">
+    <div style="padding:1rem;background:white;border-radius:6px;">
+      <strong style="color:#0369a1;">max_users_per_trainer</strong>
+      <p style="margin:0.5rem 0 0 0;color:#6b7280;font-size:0.9rem;">Número máximo de usuarios que puede tener asignados un entrenador</p>
+    </div>
+    <div style="padding:1rem;background:white;border-radius:6px;">
+      <strong style="color:#0369a1;">min_sessions_per_month</strong>
+      <p style="margin:0.5rem 0 0 0;color:#6b7280;font-size:0.9rem;">Número mínimo de sesiones recomendadas por mes</p>
+    </div>
+    <div style="padding:1rem;background:white;border-radius:6px;">
+      <strong style="color:#0369a1;">content_moderation_enabled</strong>
+      <p style="margin:0.5rem 0 0 0;color:#6b7280;font-size:0.9rem;">Habilitar moderación de contenido (true/false)</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

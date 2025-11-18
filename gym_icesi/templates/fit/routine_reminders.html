@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Recordatorios de Rutinas - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <h2 style="margin:0;">🔔 Recordatorios de Rutinas</h2>
+  <p style="color:#6b7280;margin:0.5rem 0 0 0;">Rutinas que necesitan tu atención según su frecuencia programada.</p>
+</div>
+
+{% if recordatorios %}
+<div class="card">
+  <div style="display:flex;flex-direction:column;gap:1rem;">
+    {% for recordatorio in recordatorios %}
+      <div style="padding:1.5rem;background:#fef3c7;border:2px solid #fde68a;border-radius:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+          <div>
+            <h4 style="margin:0 0 0.5rem 0;">
+              <a href="{% url 'routine_detail' recordatorio.rutina.pk %}" style="text-decoration:none;color:#111827;">
+                {{ recordatorio.rutina.nombre }}
+              </a>
+            </h4>
+            <div style="color:#6b7280;font-size:0.9rem;">
+              <span class="badge" style="background:#fde68a;color:#92400e;">
+                Frecuencia: {{ recordatorio.rutina.get_frecuencia_display }}
+              </span>
+              {% if recordatorio.rutina.dias_semana %}
+                | Días: {{ recordatorio.rutina.dias_semana }}
+              {% endif %}
+            </div>
+          </div>
+          <span class="badge" style="background:#fee2e2;color:#991b1b;font-size:0.9rem;">
+            ⚠️ {{ recordatorio.dias_sin_entrenar }} día{{ recordatorio.dias_sin_entrenar|pluralize }} sin entrenar
+          </span>
+        </div>
+        
+        {% if recordatorio.ultimo_progreso %}
+        <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:0.75rem;margin-bottom:0.75rem;">
+          <strong style="color:#6b7280;font-size:0.85rem;">📊 Última sesión:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;">
+            {{ recordatorio.ultimo_progreso.fecha|date:"d M Y" }}
+            {% if recordatorio.ultimo_progreso.esfuerzo %}
+              | Esfuerzo: {{ recordatorio.ultimo_progreso.esfuerzo }}/10
+            {% endif %}
+          </p>
+        </div>
+        {% else %}
+        <div style="background:#fee2e2;border:1px solid #fecaca;border-radius:6px;padding:0.75rem;margin-bottom:0.75rem;">
+          <p style="margin:0;color:#991b1b;font-size:0.9rem;">
+            ⚠️ Esta rutina nunca ha sido entrenada.
+          </p>
+        </div>
+        {% endif %}
+        
+        {% if recordatorio.rutina.meta_personal %}
+        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:0.75rem;margin-bottom:0.75rem;">
+          <strong style="color:#0369a1;font-size:0.85rem;">🎯 Meta Personal:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;">{{ recordatorio.rutina.meta_personal }}</p>
+        </div>
+        {% endif %}
+        
+        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+          <a href="{% url 'routine_detail' recordatorio.rutina.pk %}" class="btn btn-sm">Ver Rutina →</a>
+          <a href="{% url 'progress_create' %}?routine={{ recordatorio.rutina.pk }}" class="btn btn-sm btn-primary">✅ Registrar Progreso</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <p>🎉 ¡Excelente! No tienes rutinas pendientes. Estás al día con todas tus rutinas.</p>
+    <a href="{% url 'routine_list' %}" class="btn">Ver Mis Rutinas</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

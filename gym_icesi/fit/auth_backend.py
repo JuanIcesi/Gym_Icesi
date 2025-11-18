@@ -42,12 +42,12 @@ class InstitutionalBackend(BaseBackend):
     
     Maneja errores cuando la BD institucional no está disponible (SQLite local).
     """
-    def authenticate(self, request, username=None, password=None, **kwargs):
+    def authenticate(self, request, username=None, password=None, expected_role=None, **kwargs):
         import logging
         logger = logging.getLogger(__name__)
         
         # Log del intento de autenticación
-        logger.info(f"InstitutionalBackend.authenticate llamado: username={username}, password={'*' * len(password) if password else None}")
+        logger.info(f"InstitutionalBackend.authenticate llamado: username={username}, expected_role={expected_role}, password={'*' * len(password) if password else None}")
         
         if not username or not password:
             logger.warning("Username o password vacíos")
@@ -84,6 +84,66 @@ class InstitutionalBackend(BaseBackend):
             logger.warning(f"Contraseña incorrecta para {username}. Esperada: {expected}, Recibida: {password}")
             return None
 
+        # Validar rol esperado si se proporciona
+        if expected_role:
+            role_valid = False
+            role = (iu.role or "").upper()
+            
+            if expected_role == 'user':
+                # Estudiantes y empleados que NO son Instructores ni Administrativos
+                if role == 'STUDENT':
+                    role_valid = True
+                elif role == 'EMPLOYEE' and iu.employee_id:
+                    try:
+                        with connection.cursor() as cur:
+                            cur.execute(
+                                "SELECT employee_type FROM employees WHERE id = %s",
+                                [iu.employee_id]
+                            )
+                            row = cur.fetchone()
+                            if row and row[0]:
+                                emp_type = (row[0] or "").upper()
+                                # Permitir si NO es Instructor ni Administrativo (ej: Docente)
+                                if emp_type not in ['INSTRUCTOR', 'ADMINISTRATIVO']:
+                                    role_valid = True
+                    except Exception:
+                        pass
+            elif expected_role == 'trainer':
+                # Cualquier empleado (EMPLOYEE) puede ser entrenador
+                if role == 'EMPLOYEE' and iu.employee_id:
+                    try:
+                        with connection.cursor() as cur:
+                            cur.execute(
+                                "SELECT employee_type FROM employees WHERE id = %s",
+                                [iu.employee_id]
+                            )
+                            row = cur.fetchone()
+                            # Cualquier empleado puede ser entrenador
+                            if row:
+                                role_valid = True
+                    except Exception:
+                        pass
+            elif expected_role == 'admin':
+                # Solo ADMIN o empleados administrativos
+                if role == 'ADMIN':
+                    role_valid = True
+                elif role == 'EMPLOYEE' and iu.employee_id:
+                    try:
+                        with connection.cursor() as cur:
+                            cur.execute(
+                                "SELECT employee_type FROM employees WHERE id = %s",
+                                [iu.employee_id]
+                            )
+                            row = cur.fetchone()
+                            if row and row[0] and (row[0] or "").upper() == 'ADMINISTRATIVO':
+                                role_valid = True
+                    except Exception:
+                        pass
+            
+            if not role_valid:
+                logger.warning(f"Rol no válido para {username}: esperado={expected_role}, actual={role}")
+                return None
+
         # Crear o actualizar el usuario de Django
         try:
             user, created = User.objects.get_or_create(username=iu.username)
@@ -106,7 +166,7 @@ class InstitutionalBackend(BaseBackend):
             
             import logging
             logger = logging.getLogger(__name__)
-            logger.info(f"Usuario autenticado exitosamente: {username} (is_staff={user.is_staff}, is_superuser={user.is_superuser})")
+            logger.info(f"Usuario autenticado exitosamente: {username} (is_staff={user.is_staff}, is_superuser={user.is_superuser}, expected_role={expected_role})")
             
             return user
         except Exception as e:

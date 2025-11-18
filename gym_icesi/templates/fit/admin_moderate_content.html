@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Moderar Contenido - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'admin_content_moderation' %}" class="btn btn-secondary">← Volver a Moderación</a>
+</div>
+
+<div class="card" style="max-width:900px;margin:0 auto;">
+  <div style="margin-bottom:1.5rem;">
+    <h2 style="margin:0 0 0.5rem 0;">
+      {% if tipo == "exercise" %}💪{% else %}📋{% endif %}
+      Moderar {{ tipo|capfirst }}: {{ contenido.nombre }}
+    </h2>
+    <p style="color:#6b7280;margin:0;">
+      Revisa el contenido y decide si aprobarlo, rechazarlo o marcarlo para edición.
+    </p>
+  </div>
+
+  <!-- Información del Contenido -->
+  <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">
+    {% if tipo == "exercise" %}
+      <h4 style="margin:0 0 1rem 0;">Información del Ejercicio</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+        <div>
+          <strong style="color:#6b7280;font-size:0.85rem;">Tipo:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;">{{ contenido.get_tipo_display }}</p>
+        </div>
+        <div>
+          <strong style="color:#6b7280;font-size:0.85rem;">Dificultad:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;">{{ contenido.dificultad }}/5</p>
+        </div>
+      </div>
+      {% if contenido.descripcion %}
+        <div style="margin-bottom:1rem;">
+          <strong style="color:#6b7280;font-size:0.85rem;">Descripción:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;white-space:pre-wrap;">{{ contenido.descripcion }}</p>
+        </div>
+      {% endif %}
+      {% if contenido.instrucciones_paso_a_paso %}
+        <div style="margin-bottom:1rem;">
+          <strong style="color:#6b7280;font-size:0.85rem;">Instrucciones Paso a Paso:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;white-space:pre-wrap;">{{ contenido.instrucciones_paso_a_paso }}</p>
+        </div>
+      {% endif %}
+      {% if contenido.creado_por %}
+        <div>
+          <strong style="color:#6b7280;font-size:0.85rem;">Creado por:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;">{{ contenido.creado_por.username }}</p>
+        </div>
+      {% endif %}
+    {% else %}
+      <h4 style="margin:0 0 1rem 0;">Información de la Rutina</h4>
+      <div style="margin-bottom:1rem;">
+        <strong style="color:#6b7280;font-size:0.85rem;">Creada por:</strong>
+        <p style="margin:0.25rem 0 0 0;color:#111827;">{{ contenido.user.username }}</p>
+      </div>
+      {% if contenido.descripcion %}
+        <div style="margin-bottom:1rem;">
+          <strong style="color:#6b7280;font-size:0.85rem;">Descripción:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;white-space:pre-wrap;">{{ contenido.descripcion }}</p>
+        </div>
+      {% endif %}
+      <div>
+        <strong style="color:#6b7280;font-size:0.85rem;">Ejercicios en la rutina:</strong>
+        <p style="margin:0.25rem 0 0 0;color:#111827;">{{ contenido.items.count }} ejercicios</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Formulario de Moderación -->
+  <form method="post">
+    {% csrf_token %}
+    
+    <div style="margin-bottom:1.5rem;">
+      <label for="comentarios" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        💬 Comentarios de Moderación
+      </label>
+      <textarea name="comentarios" id="comentarios" rows="4" class="form-control" placeholder="Comentarios sobre la decisión de moderación..."></textarea>
+    </div>
+
+    <div style="display:flex;gap:1rem;justify-content:space-between;">
+      <button type="submit" name="accion" value="aprobar" class="btn" style="background:#10b981;color:white;flex:1;">
+        ✅ Aprobar
+      </button>
+      <button type="submit" name="accion" value="editar" class="btn" style="background:#f59e0b;color:white;flex:1;">
+        ✏️ Marcar para Edición
+      </button>
+      <button type="submit" name="accion" value="rechazar" class="btn" style="background:#ef4444;color:white;flex:1;" onclick="return confirm('¿Estás seguro de rechazar y eliminar este contenido?');">
+        ❌ Rechazar y Eliminar
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}Recomendación Avanzada - {{ tuser.username }} - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'trainer_feedback' tuser.id %}" class="btn btn-secondary">← Volver a Detalle de Usuario</a>
+</div>
+
+<div class="card" style="max-width:900px;margin:0 auto;">
+  <div style="margin-bottom:1.5rem;">
+    <h2 style="margin:0 0 0.5rem 0;">💬 Recomendación Avanzada</h2>
+    <p style="color:#6b7280;margin:0;">
+      Envía una recomendación personalizada a <strong>{{ tuser.username }}</strong> con ajustes específicos.
+    </p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- Asociar con Rutina o Progreso -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+      <div>
+        <label for="routine_id" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          📋 Asociar con Rutina (opcional)
+        </label>
+        <select name="routine_id" id="routine_id" class="form-control">
+          <option value="">-- Seleccionar rutina --</option>
+          {% for rutina in rutinas %}
+            <option value="{{ rutina.pk }}">{{ rutina.nombre }}</option>
+          {% endfor %}
+        </select>
+        <small style="color:#6b7280;">Asocia esta recomendación con una rutina específica</small>
+      </div>
+
+      <div>
+        <label for="progress_id" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          📊 Asociar con Sesión de Progreso (opcional)
+        </label>
+        <select name="progress_id" id="progress_id" class="form-control">
+          <option value="">-- Seleccionar sesión --</option>
+          {% for progress in progresos_recientes %}
+            <option value="{{ progress.pk }}">
+              {{ progress.routine.nombre }} - {{ progress.fecha|date:"d M Y" }}
+            </option>
+          {% endfor %}
+        </select>
+        <small style="color:#6b7280;">Asocia esta recomendación con una sesión específica</small>
+      </div>
+    </div>
+
+    <!-- Ajustes de Intensidad y Dificultad -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+      <div>
+        <label for="ajuste_intensidad" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          💪 Ajuste de Intensidad Sugerido
+        </label>
+        <select name="ajuste_intensidad" id="ajuste_intensidad" class="form-control">
+          <option value="">-- Sin ajuste específico --</option>
+          <option value="aumentar">Aumentar intensidad</option>
+          <option value="mantener">Mantener intensidad actual</option>
+          <option value="reducir">Reducir intensidad</option>
+        </select>
+        <small style="color:#6b7280;">Sugerencia de ajuste en la intensidad del entrenamiento</small>
+      </div>
+
+      <div>
+        <label for="ajuste_dificultad" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          📈 Ajuste de Dificultad Sugerido
+        </label>
+        <select name="ajuste_dificultad" id="ajuste_dificultad" class="form-control">
+          <option value="">-- Sin ajuste específico --</option>
+          <option value="aumentar">Aumentar dificultad</option>
+          <option value="mantener">Mantener dificultad actual</option>
+          <option value="reducir">Reducir dificultad</option>
+        </select>
+        <small style="color:#6b7280;">Sugerencia de ajuste en la dificultad de los ejercicios</small>
+      </div>
+    </div>
+
+    <!-- Mensaje de Recomendación -->
+    <div style="margin-bottom:1.5rem;">
+      <label for="id_mensaje" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        💬 Mensaje de Recomendación <span style="color:#ef4444;">*</span>
+      </label>
+      {{ form.mensaje }}
+      {% if form.mensaje.errors %}
+        <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+          {{ form.mensaje.errors }}
+        </div>
+      {% endif %}
+      <small style="color:#6b7280;">
+        Escribe una recomendación detallada. Puedes incluir:
+        <ul style="margin:0.5rem 0 0 1.5rem;padding:0;">
+          <li>Comentarios específicos sobre ejercicios realizados</li>
+          <li>Sugerencias de mejora en la técnica</li>
+          <li>Recomendaciones de nuevos ejercicios</li>
+          <li>Motivación y reconocimiento de logros</li>
+        </ul>
+      </small>
+    </div>
+
+    <!-- Vista Previa de Ajustes -->
+    <div id="preview-ajustes" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1rem;margin-bottom:1.5rem;">
+      <h4 style="margin:0 0 0.75rem 0;color:#0369a1;">📋 Vista Previa de Ajustes Sugeridos</h4>
+      <div id="preview-content" style="color:#111827;"></div>
+    </div>
+
+    <div style="display:flex;gap:1rem;">
+      <button type="submit" class="btn btn-primary">📤 Enviar Recomendación</button>
+      <a href="{% url 'trainer_feedback' tuser.id %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<script>
+// Mostrar vista previa de ajustes
+document.addEventListener('DOMContentLoaded', function() {
+  const intensidadSelect = document.getElementById('ajuste_intensidad');
+  const dificultadSelect = document.getElementById('ajuste_dificultad');
+  const previewDiv = document.getElementById('preview-ajustes');
+  const previewContent = document.getElementById('preview-content');
+  
+  function updatePreview() {
+    const intensidad = intensidadSelect.value;
+    const dificultad = dificultadSelect.value;
+    
+    if (intensidad || dificultad) {
+      let content = '<div style="display:flex;flex-direction:column;gap:0.5rem;">';
+      
+      if (intensidad) {
+        const icon = intensidad === 'aumentar' ? '📈' : intensidad === 'reducir' ? '📉' : '➡️';
+        const text = intensidad === 'aumentar' ? 'Aumentar' : intensidad === 'reducir' ? 'Reducir' : 'Mantener';
+        content += `<div><strong>💪 Intensidad:</strong> ${icon} ${text}</div>`;
+      }
+      
+      if (dificultad) {
+        const icon = dificultad === 'aumentar' ? '📈' : dificultad === 'reducir' ? '📉' : '➡️';
+        const text = dificultad === 'aumentar' ? 'Aumentar' : dificultad === 'reducir' ? 'Reducir' : 'Mantener';
+        content += `<div><strong>📈 Dificultad:</strong> ${icon} ${text}</div>`;
+      }
+      
+      content += '</div>';
+      previewContent.innerHTML = content;
+      previewDiv.style.display = 'block';
+    } else {
+      previewDiv.style.display = 'none';
+    }
+  }
+  
+  intensidadSelect.addEventListener('change', updatePreview);
+  dificultadSelect.addEventListener('change', updatePreview);
+});
+</script>
+{% endblock %}

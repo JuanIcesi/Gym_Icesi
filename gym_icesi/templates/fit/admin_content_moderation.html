@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Moderación de Contenido - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+</div>
+
+<div style="margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e5e7eb;">
+  <h1 style="margin:0 0 0.5rem 0;">🛡️ Moderación de Contenido</h1>
+  <p style="color:#6b7280;margin:0;">Revisa y aprueba ejercicios y rutinas creados por usuarios y entrenadores</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;">
+  <!-- Ejercicios Pendientes -->
+  <div class="card">
+    <h3 style="margin:0 0 1rem 0;">💪 Ejercicios Pendientes ({{ ejercicios_pendientes|length }})</h3>
+    {% if ejercicios_pendientes %}
+      <div style="display:flex;flex-direction:column;gap:0.75rem;max-height:400px;overflow-y:auto;">
+        {% for ejercicio in ejercicios_pendientes %}
+          <div style="padding:1rem;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+              <div>
+                <strong style="color:#111827;">{{ ejercicio.nombre }}</strong>
+                <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+                  Tipo: {{ ejercicio.get_tipo_display }} | Dificultad: {{ ejercicio.dificultad }}/5
+                </div>
+              </div>
+              <span class="badge" style="background:#fde68a;color:#92400e;">Pendiente</span>
+            </div>
+            {% if ejercicio.descripcion %}
+              <p style="color:#6b7280;font-size:0.9rem;margin:0.5rem 0;">{{ ejercicio.descripcion|truncatewords:20 }}</p>
+            {% endif %}
+            <div style="margin-top:0.75rem;">
+              <a href="{% url 'admin_moderate_content' 'exercise' ejercicio.id %}" class="btn btn-sm btn-primary">Revisar →</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No hay ejercicios pendientes de moderación.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Rutinas Pendientes -->
+  <div class="card">
+    <h3 style="margin:0 0 1rem 0;">📋 Rutinas Pendientes ({{ rutinas_pendientes|length }})</h3>
+    {% if rutinas_pendientes %}
+      <div style="display:flex;flex-direction:column;gap:0.75rem;max-height:400px;overflow-y:auto;">
+        {% for rutina in rutinas_pendientes %}
+          <div style="padding:1rem;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+              <div>
+                <strong style="color:#111827;">{{ rutina.nombre }}</strong>
+                <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+                  Creada por: {{ rutina.user.username }}
+                </div>
+              </div>
+              <span class="badge" style="background:#fde68a;color:#92400e;">Pendiente</span>
+            </div>
+            {% if rutina.descripcion %}
+              <p style="color:#6b7280;font-size:0.9rem;margin:0.5rem 0;">{{ rutina.descripcion|truncatewords:20 }}</p>
+            {% endif %}
+            <div style="margin-top:0.75rem;">
+              <a href="{% url 'admin_moderate_content' 'routine' rutina.id %}" class="btn btn-sm btn-primary">Revisar →</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No hay rutinas pendientes de moderación.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Moderaciones Recientes -->
+{% if moderaciones_recientes %}
+<div class="card">
+  <h3 style="margin:0 0 1rem 0;">📜 Moderaciones Recientes</h3>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+          <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Fecha</th>
+          <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Tipo</th>
+          <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Estado</th>
+          <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Moderador</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mod in moderaciones_recientes %}
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:0.75rem;color:#6b7280;font-size:0.9rem;">
+              {{ mod.fecha_revision|date:"d M Y H:i"|default:"-" }}
+            </td>
+            <td style="padding:0.75rem;">
+              <span class="badge" style="background:#e0e7ff;color:#4338ca;">{{ mod.get_tipo_contenido_display }}</span>
+            </td>
+            <td style="padding:0.75rem;">
+              <span class="badge" style="background:{% if mod.estado == 'aprobado' %}#d1fae5{% elif mod.estado == 'rechazado' %}#fee2e2{% else %}#fef3c7{% endif %};color:{% if mod.estado == 'aprobado' %}#065f46{% elif mod.estado == 'rechazado' %}#991b1b{% else %}#92400e{% endif %};">
+                {{ mod.get_estado_display }}
+              </span>
+            </td>
+            <td style="padding:0.75rem;color:#6b7280;">
+              {{ mod.moderador.username|default:"-" }}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

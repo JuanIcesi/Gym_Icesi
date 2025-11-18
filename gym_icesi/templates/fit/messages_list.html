@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Mensajería - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
+  <h2 style="margin:0;">💬 Mensajería</h2>
+  <a href="{% url 'message_create' %}" class="btn btn-primary">✉️ Nuevo Mensaje</a>
+</div>
+
+{% if unread_count > 0 %}
+<div class="card" style="background:#fef3c7;border:2px solid #fde68a;margin-bottom:1.5rem;">
+  <p style="margin:0;color:#92400e;">
+    <strong>📬 Tienes {{ unread_count }} mensaje{{ unread_count|pluralize }} sin leer</strong>
+  </p>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+  <!-- Mensajes Recibidos -->
+  <div class="card">
+    <h3 style="margin:0 0 1rem 0;">📥 Recibidos</h3>
+    {% if received %}
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        {% for msg in received %}
+          <div style="padding:1rem;background:{% if not msg.leido %}#eff6ff{% else %}#f9fafb{% endif %};border-radius:8px;border-left:4px solid {% if not msg.leido %}#3b82f6{% else %}#9ca3af{% endif %};">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+              <div>
+                <strong style="color:#111827;">{{ msg.remitente.username }}</strong>
+                {% if not msg.leido %}
+                  <span class="badge badge-primary" style="margin-left:0.5rem;font-size:0.75rem;">Nuevo</span>
+                {% endif %}
+              </div>
+              <span style="color:#6b7280;font-size:0.85rem;">{{ msg.fecha|date:"d M Y H:i" }}</span>
+            </div>
+            <a href="{% url 'message_detail' msg.pk %}" style="text-decoration:none;color:#111827;">
+              <strong style="display:block;margin-bottom:0.25rem;">{{ msg.asunto }}</strong>
+              <p style="margin:0;color:#6b7280;font-size:0.9rem;">{{ msg.mensaje|truncatewords:15 }}</p>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No tienes mensajes recibidos.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Mensajes Enviados -->
+  <div class="card">
+    <h3 style="margin:0 0 1rem 0;">📤 Enviados</h3>
+    {% if sent %}
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        {% for msg in sent %}
+          <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid #9ca3af;">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+              <div>
+                <strong style="color:#111827;">Para: {{ msg.destinatario.username }}</strong>
+              </div>
+              <span style="color:#6b7280;font-size:0.85rem;">{{ msg.fecha|date:"d M Y H:i" }}</span>
+            </div>
+            <a href="{% url 'message_detail' msg.pk %}" style="text-decoration:none;color:#111827;">
+              <strong style="display:block;margin-bottom:0.25rem;">{{ msg.asunto }}</strong>
+              <p style="margin:0;color:#6b7280;font-size:0.9rem;">{{ msg.mensaje|truncatewords:15 }}</p>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No has enviado mensajes.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+

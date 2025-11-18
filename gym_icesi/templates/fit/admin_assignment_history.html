@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Historial de Asignaciones - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'admin_assign_trainer_advanced' %}" class="btn btn-secondary">← Volver a Asignaciones</a>
+</div>
+
+<div style="margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e5e7eb;">
+  <h1 style="margin:0 0 0.5rem 0;">📜 Historial de Asignaciones</h1>
+  <p style="color:#6b7280;margin:0;">Registro completo de cambios en asignaciones de entrenadores</p>
+</div>
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">🔍 Filtros</h3>
+  <form method="get" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;">
+    <div>
+      <label for="user" style="display:block;margin-bottom:0.5rem;font-weight:500;">Usuario</label>
+      <input type="text" name="user" id="user" value="{{ user_filter }}" class="form-control" placeholder="Nombre de usuario...">
+    </div>
+    
+    <div>
+      <label for="trainer" style="display:block;margin-bottom:0.5rem;font-weight:500;">Entrenador</label>
+      <input type="text" name="trainer" id="trainer" value="{{ trainer_filter }}" class="form-control" placeholder="Nombre de entrenador...">
+    </div>
+    
+    <div>
+      <label for="accion" style="display:block;margin-bottom:0.5rem;font-weight:500;">Acción</label>
+      <select name="accion" id="accion" class="form-control">
+        <option value="">Todas</option>
+        <option value="creada" {% if accion_filter == "creada" %}selected{% endif %}>Creada</option>
+        <option value="modificada" {% if accion_filter == "modificada" %}selected{% endif %}>Modificada</option>
+        <option value="desactivada" {% if accion_filter == "desactivada" %}selected{% endif %}>Desactivada</option>
+        <option value="reactivada" {% if accion_filter == "reactivada" %}selected{% endif %}>Reactivada</option>
+      </select>
+    </div>
+    
+    <div style="display:flex;align-items:end;gap:0.5rem;">
+      <button type="submit" class="btn btn-primary" style="flex:1;">🔍 Buscar</button>
+      <a href="{% url 'admin_assignment_history' %}" class="btn btn-secondary">Limpiar</a>
+    </div>
+  </form>
+</div>
+
+<!-- Historial -->
+<div class="card">
+  <h3 style="margin:0 0 1rem 0;">📋 Registro de Cambios</h3>
+  {% if historial %}
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Fecha</th>
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Usuario</th>
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Entrenador</th>
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Acción</th>
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Administrador</th>
+            <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Notas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in historial %}
+            <tr style="border-bottom:1px solid #e5e7eb;">
+              <td style="padding:0.75rem;color:#6b7280;font-size:0.9rem;">
+                {{ item.fecha|date:"d M Y H:i" }}
+              </td>
+              <td style="padding:0.75rem;">
+                <strong style="color:#111827;">{{ item.assignment.user.username }}</strong>
+              </td>
+              <td style="padding:0.75rem;">
+                <strong style="color:#111827;">{{ item.assignment.trainer.username }}</strong>
+              </td>
+              <td style="padding:0.75rem;">
+                <span class="badge" style="background:{% if item.accion == 'creada' %}#d1fae5{% elif item.accion == 'desactivada' %}#fee2e2{% else %}#fef3c7{% endif %};color:{% if item.accion == 'creada' %}#065f46{% elif item.accion == 'desactivada' %}#991b1b{% else %}#92400e{% endif %};">
+                  {{ item.get_accion_display }}
+                </span>
+              </td>
+              <td style="padding:0.75rem;color:#6b7280;">
+                {{ item.administrador.username|default:"Sistema" }}
+              </td>
+              <td style="padding:0.75rem;color:#6b7280;font-size:0.85rem;">
+                {{ item.notas|truncatewords:10 }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>No hay registros de historial.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

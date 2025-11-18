@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block title %}Análisis de Progreso - {{ tuser.username }} - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'trainer_feedback' tuser.id %}" class="btn btn-secondary">← Volver a Detalle de Usuario</a>
+</div>
+
+<div style="margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e5e7eb;">
+  <h1 style="margin:0 0 0.5rem 0;">
+    📊 Análisis Detallado de Progreso
+  </h1>
+  <p style="color:#6b7280;margin:0;">
+    <strong>Usuario:</strong> {{ user_info.first_name|default:"" }} {{ user_info.last_name|default:tuser.username }}
+    {% if user_info.student_id %}
+      | <strong>ID:</strong> {{ user_info.student_id }}
+    {% endif %}
+  </p>
+</div>
+
+<!-- Métricas Generales -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:2rem;">
+  <div class="card" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Sesiones</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_sesiones }}</div>
+  </div>
+  
+  <div class="card" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Tiempo Total</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_tiempo_horas }}h</div>
+  </div>
+  
+  <div class="card" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Esfuerzo Promedio</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ promedio_esfuerzo }}/10</div>
+  </div>
+</div>
+
+<!-- Alertas -->
+{% if alertas %}
+<div class="card" style="background:#fee2e2;border:2px solid #fecaca;margin-bottom:1.5rem;">
+  <h3 style="color:#991b1b;margin:0 0 1rem 0;">⚠️ Alertas de Rendimiento</h3>
+  <div style="display:flex;flex-direction:column;gap:0.75rem;">
+    {% for alerta in alertas %}
+      <div style="padding:1rem;background:white;border-radius:8px;border-left:4px solid {% if alerta.severidad == 'alta' %}#ef4444{% elif alerta.severidad == 'media' %}#f59e0b{% else %}#eab308{% endif %};">
+        <div style="display:flex;align-items:start;gap:0.75rem;">
+          <span style="font-size:1.5rem;">
+            {% if alerta.tipo == 'inactividad' %}⏸️{% elif alerta.tipo == 'baja_frecuencia' %}📉{% else %}💪{% endif %}
+          </span>
+          <div style="flex:1;">
+            <strong style="color:#111827;display:block;margin-bottom:0.25rem;">{{ alerta.mensaje }}</strong>
+            <span class="badge" style="background:{% if alerta.severidad == 'alta' %}#fee2e2{% elif alerta.severidad == 'media' %}#fef3c7{% else %}#fef9c3{% endif %};color:{% if alerta.severidad == 'alta' %}#991b1b{% elif alerta.severidad == 'media' %}#92400e{% else %}#854d0e{% endif %};font-size:0.75rem;">
+              Severidad: {{ alerta.severidad|capfirst }}
+            </span>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Tendencias -->
+{% if tendencias %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">📈 Tendencias Identificadas</h3>
+  <div style="display:flex;flex-direction:column;gap:0.75rem;">
+    {% for tendencia in tendencias %}
+      <div style="padding:1rem;background:{% if tendencia.tipo == 'positiva' %}#d1fae5{% else %}#fee2e2{% endif %};border-radius:8px;border-left:4px solid {% if tendencia.tipo == 'positiva' %}#10b981{% else %}#ef4444{% endif %};">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span style="font-size:1.5rem;">
+            {% if tendencia.tipo == 'positiva' %}📈{% else %}📉{% endif %}
+          </span>
+          <p style="margin:0;color:#111827;">{{ tendencia.mensaje }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Progreso Mensual -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">📅 Progreso Mensual (Últimos 6 Meses)</h3>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+          <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Mes</th>
+          <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Sesiones</th>
+          <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Tiempo Total</th>
+          <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Esfuerzo Promedio</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mes in progreso_mensual %}
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:0.75rem;color:#111827;"><strong>{{ mes.mes }}</strong></td>
+            <td style="padding:0.75rem;text-align:center;color:#111827;">{{ mes.sesiones }}</td>
+            <td style="padding:0.75rem;text-align:center;color:#111827;">{{ mes.tiempo_total|floatformat:0 }} seg</td>
+            <td style="padding:0.75rem;text-align:center;color:#111827;">{{ mes.esfuerzo_promedio }}/10</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Progreso por Rutina -->
+{% if progreso_por_rutina %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">📋 Progreso por Rutina</h3>
+  <div style="display:flex;flex-direction:column;gap:1rem;">
+    {% for item in progreso_por_rutina %}
+      <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid #3b82f6;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+          <div>
+            <h4 style="margin:0 0 0.5rem 0;">
+              <a href="{% url 'routine_detail' item.rutina.pk %}" style="text-decoration:none;color:#111827;">
+                {{ item.rutina.nombre }}
+              </a>
+            </h4>
+            <div style="color:#6b7280;font-size:0.9rem;">
+              Última sesión: {{ item.ultima_sesion|date:"d M Y" }}
+            </div>
+          </div>
+          <span class="badge badge-primary">{{ item.sesiones }} sesiones</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:1rem;">
+          <div>
+            <strong style="color:#6b7280;font-size:0.85rem;">Sesiones Totales</strong>
+            <p style="margin:0.25rem 0 0 0;color:#111827;font-size:1.1rem;font-weight:bold;">{{ item.sesiones }}</p>
+          </div>
+          <div>
+            <strong style="color:#6b7280;font-size:0.85rem;">Esfuerzo Promedio</strong>
+            <p style="margin:0.25rem 0 0 0;color:#111827;font-size:1.1rem;font-weight:bold;">{{ item.esfuerzo_promedio }}/10</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Progreso por Tipo de Ejercicio -->
+{% if progreso_por_tipo %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">💪 Distribución por Tipo de Ejercicio</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;">
+    {% for tipo, datos in progreso_por_tipo.items %}
+      <div style="padding:1.5rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;">
+        <h4 style="margin:0 0 0.75rem 0;color:#0369a1;">{{ tipo|capfirst }}</h4>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <div>
+            <strong style="color:#6b7280;font-size:0.85rem;">Sesiones</strong>
+            <p style="margin:0.25rem 0 0 0;color:#111827;font-size:1.2rem;font-weight:bold;">{{ datos.sesiones }}</p>
+          </div>
+          <div>
+            <strong style="color:#6b7280;font-size:0.85rem;">Tiempo Total</strong>
+            <p style="margin:0.25rem 0 0 0;color:#111827;font-size:1.2rem;font-weight:bold;">{{ datos.tiempo|floatformat:0 }} seg</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Últimas Sesiones -->
+{% if all_progress %}
+<div class="card">
+  <h3 style="margin:0 0 1rem 0;">📊 Últimas Sesiones Registradas</h3>
+  <div style="display:flex;flex-direction:column;gap:0.75rem;">
+    {% for progress in all_progress %}
+      <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid #0b74de;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+          <div>
+            <strong style="color:#111827;">{{ progress.routine.nombre }}</strong>
+            <span style="color:#6b7280;font-size:0.9rem;margin-left:0.5rem;">{{ progress.fecha|date:"d M Y" }}</span>
+          </div>
+          <span class="badge badge-primary">Esfuerzo: {{ progress.esfuerzo }}/10</span>
+        </div>
+        <div style="color:#6b7280;font-size:0.9rem;">
+          {% if progress.tiempo_seg %}
+            ⏱️ {{ progress.tiempo_seg }} segundos
+          {% endif %}
+          {% if progress.repeticiones %}
+            | 🔄 {{ progress.repeticiones }} repeticiones
+          {% endif %}
+          {% if progress.peso_usado %}
+            | ⚖️ {{ progress.peso_usado }} kg
+          {% endif %}
+        </div>
+        {% if progress.notas %}
+          <div style="margin-top:0.5rem;padding:0.75rem;background:white;border-radius:6px;color:#374151;font-size:0.9rem;">
+            📝 {{ progress.notas|truncatewords:20 }}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Acciones -->
+<div style="margin-top:2rem;display:flex;gap:1rem;">
+  <a href="{% url 'trainer_recommendation_advanced' tuser.id %}" class="btn btn-primary">💬 Enviar Recomendación Avanzada</a>
+  <a href="{% url 'trainer_feedback' tuser.id %}" class="btn btn-secondary">Volver a Detalle</a>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}{{ evento.titulo }} - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'eventos_list' %}" class="btn btn-secondary">← Volver a Eventos</a>
+</div>
+
+<div class="card" style="max-width:900px;margin:0 auto;">
+  <div style="margin-bottom:1.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem;">
+      <div>
+        <h2 style="margin:0 0 0.5rem 0;">{{ evento.titulo }}</h2>
+        <span class="badge" style="background:#e0e7ff;color:#4338ca;">{{ evento.get_tipo_display }}</span>
+      </div>
+      {% if inscrito %}
+        <span class="badge badge-success">✅ Inscrito</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="margin-bottom:1.5rem;">
+    <h4 style="margin:0 0 0.5rem 0;color:#6b7280;">📝 Descripción</h4>
+    <p style="white-space:pre-wrap;line-height:1.6;color:#111827;">{{ evento.descripcion }}</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1rem;">
+      <strong style="color:#0369a1;display:block;margin-bottom:0.5rem;">📅 Fecha de Inicio</strong>
+      <p style="margin:0;color:#111827;">{{ evento.fecha_inicio|date:"l, d F Y" }}<br>
+      <small style="color:#6b7280;">{{ evento.fecha_inicio|date:"H:i" }}</small></p>
+    </div>
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1rem;">
+      <strong style="color:#0369a1;display:block;margin-bottom:0.5rem;">📅 Fecha de Fin</strong>
+      <p style="margin:0;color:#111827;">{{ evento.fecha_fin|date:"l, d F Y" }}<br>
+      <small style="color:#6b7280;">{{ evento.fecha_fin|date:"H:i" }}</small></p>
+    </div>
+  </div>
+
+  {% if evento.ubicacion %}
+  <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:1rem;margin-bottom:1.5rem;">
+    <strong style="color:#0369a1;display:block;margin-bottom:0.5rem;">📍 Ubicación</strong>
+    <p style="margin:0;color:#111827;">{{ evento.ubicacion }}</p>
+  </div>
+  {% endif %}
+
+  {% if evento.capacidad_maxima %}
+  <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:1rem;margin-bottom:1.5rem;">
+    <strong style="color:#92400e;display:block;margin-bottom:0.5rem;">👥 Capacidad</strong>
+    <p style="margin:0;color:#111827;">
+      {{ inscripciones_count }} / {{ evento.capacidad_maxima }} inscritos
+      {% if inscripciones_count >= evento.capacidad_maxima %}
+        <span class="badge" style="background:#fee2e2;color:#991b1b;margin-left:0.5rem;">Lleno</span>
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+
+  <div style="display:flex;gap:1rem;margin-top:1.5rem;">
+    {% if inscrito %}
+      <a href="{% url 'evento_desinscribir' evento.pk %}" class="btn" style="background:#fee2e2;color:#991b1b;">❌ Desinscribirse</a>
+    {% else %}
+      {% if evento.capacidad_maxima and inscripciones_count >= evento.capacidad_maxima %}
+        <button class="btn" style="background:#d1d5db;color:#6b7280;" disabled>Evento Lleno</button>
+      {% else %}
+        <a href="{% url 'evento_inscribir' evento.pk %}" class="btn btn-primary">✅ Inscribirse</a>
+      {% endif %}
+    {% endif %}
+    <a href="{% url 'eventos_list' %}" class="btn btn-secondary">Volver</a>
+  </div>
+</div>
+{% endblock %}
+

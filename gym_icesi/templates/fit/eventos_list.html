@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Eventos y Talleres - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <h2 style="margin:0;">📅 Eventos y Talleres</h2>
+  <p style="color:#6b7280;margin:0.5rem 0 0 0;">Consulta los eventos y talleres disponibles en el gimnasio.</p>
+</div>
+
+{% if eventos_proximos %}
+<div class="card" style="margin-bottom:2rem;">
+  <h3 style="margin:0 0 1rem 0;">🔜 Próximos Eventos</h3>
+  <div style="display:flex;flex-direction:column;gap:1rem;">
+    {% for evento in eventos_proximos %}
+      <div style="padding:1.5rem;background:#f9fafb;border-radius:8px;border-left:4px solid #3b82f6;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+          <div>
+            <h4 style="margin:0 0 0.5rem 0;">
+              <a href="{% url 'evento_detail' evento.pk %}" style="text-decoration:none;color:#111827;">
+                {{ evento.titulo }}
+              </a>
+            </h4>
+            <div style="color:#6b7280;font-size:0.9rem;">
+              <span class="badge" style="background:#e0e7ff;color:#4338ca;">{{ evento.get_tipo_display }}</span>
+              {% if evento.ubicacion %}
+                | 📍 {{ evento.ubicacion }}
+              {% endif %}
+            </div>
+          </div>
+          {% if evento.pk in inscripciones %}
+            <span class="badge badge-success">Inscrito</span>
+          {% endif %}
+        </div>
+        <p style="margin:0 0 0.75rem 0;color:#6b7280;">{{ evento.descripcion|truncatewords:30 }}</p>
+        <div style="color:#6b7280;font-size:0.85rem;">
+          📅 <strong>Inicio:</strong> {{ evento.fecha_inicio|date:"d M Y H:i" }}<br>
+          📅 <strong>Fin:</strong> {{ evento.fecha_fin|date:"d M Y H:i" }}
+          {% if evento.capacidad_maxima %}
+            | 👥 Capacidad: {{ evento.inscripciones.count }}/{{ evento.capacidad_maxima }}
+          {% endif %}
+        </div>
+        <div style="margin-top:0.75rem;">
+          <a href="{% url 'evento_detail' evento.pk %}" class="btn btn-sm">Ver Detalles →</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <p>No hay eventos próximos programados.</p>
+  </div>
+</div>
+{% endif %}
+
+{% if eventos_pasados %}
+<div class="card">
+  <h3 style="margin:0 0 1rem 0;">📜 Eventos Pasados</h3>
+  <div style="display:flex;flex-direction:column;gap:0.75rem;">
+    {% for evento in eventos_pasados %}
+      <div style="padding:1rem;background:#f9fafb;border-radius:8px;opacity:0.7;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong>{{ evento.titulo }}</strong>
+            <span style="color:#6b7280;font-size:0.85rem;margin-left:0.5rem;">
+              {{ evento.fecha_inicio|date:"d M Y" }}
+            </span>
+          </div>
+          <a href="{% url 'evento_detail' evento.pk %}" class="btn btn-sm">Ver →</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

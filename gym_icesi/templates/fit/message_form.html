@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Nuevo Mensaje - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'messages_list' %}" class="btn btn-secondary">← Volver a Mensajería</a>
+</div>
+
+<div class="card" style="max-width:800px;margin:0 auto;">
+  <div style="margin-bottom:1.5rem;">
+    <h2 style="margin:0 0 0.5rem 0;">✉️ Nuevo Mensaje</h2>
+    <p style="color:#6b7280;margin:0;">
+      Envía un mensaje a tu entrenador o a tus usuarios asignados.
+    </p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div style="margin-bottom:1rem;">
+      <label for="id_destinatario" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        👤 Destinatario <span style="color:#ef4444;">*</span>
+      </label>
+      {{ form.destinatario }}
+      {% if form.destinatario.errors %}
+        <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+          {{ form.destinatario.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label for="id_asunto" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        📝 Asunto <span style="color:#ef4444;">*</span>
+      </label>
+      {{ form.asunto }}
+      {% if form.asunto.errors %}
+        <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+          {{ form.asunto.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label for="id_mensaje" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        💬 Mensaje <span style="color:#ef4444;">*</span>
+      </label>
+      {{ form.mensaje }}
+      {% if form.mensaje.errors %}
+        <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+          {{ form.mensaje.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div>
+        <label for="id_relacionado_routine" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          📋 Relacionado con Rutina (opcional)
+        </label>
+        {{ form.relacionado_routine }}
+      </div>
+
+      <div>
+        <label for="id_relacionado_progress" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          📊 Relacionado con Progreso (opcional)
+        </label>
+        {{ form.relacionado_progress }}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:1rem;">
+      <button type="submit" class="btn btn-primary">📤 Enviar Mensaje</button>
+      <a href="{% url 'messages_list' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

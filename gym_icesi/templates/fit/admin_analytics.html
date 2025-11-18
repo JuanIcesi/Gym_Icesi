@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}Analytics y Reportes - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+</div>
+
+<div style="margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e5e7eb;">
+  <h1 style="margin:0 0 0.5rem 0;">📊 Analytics y Reportes Avanzados</h1>
+  <p style="color:#6b7280;margin:0;">Métricas detalladas del sistema y análisis de uso</p>
+</div>
+
+<!-- Métricas Generales -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:2rem;">
+  <div class="card" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Usuarios</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_usuarios }}</div>
+  </div>
+  
+  <div class="card" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Entrenadores</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_entrenadores }}</div>
+  </div>
+  
+  <div class="card" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Sesiones</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_sesiones }}</div>
+  </div>
+  
+  <div class="card" style="background:linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Rutinas</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_rutinas }}</div>
+  </div>
+  
+  <div class="card" style="background:linear-gradient(135deg, #fa709a 0%, #fee140 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Ejercicios</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_ejercicios }}</div>
+  </div>
+</div>
+
+<!-- Actividad Mensual -->
+{% if actividad_mensual %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">📅 Actividad Mensual (Últimos 12 Meses)</h3>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+          <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Mes</th>
+          <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Sesiones</th>
+          <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Usuarios Activos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mes in actividad_mensual %}
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:0.75rem;color:#111827;"><strong>{{ mes.mes }}</strong></td>
+            <td style="padding:0.75rem;text-align:center;color:#111827;">{{ mes.sesiones }}</td>
+            <td style="padding:0.75rem;text-align:center;color:#111827;">{{ mes.usuarios_activos }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Actividad por Facultad -->
+{% if actividad_por_facultad %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">🏛️ Actividad por Facultad/Departamento (Últimos 30 días)</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:1rem;">
+    {% for facultad, datos in actividad_por_facultad.items %}
+      <div style="padding:1.5rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;">
+        <h4 style="margin:0 0 0.75rem 0;color:#0369a1;">{{ facultad }}</h4>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <div>
+            <strong style="color:#6b7280;font-size:0.85rem;">Usuarios Activos:</strong>
+            <p style="margin:0.25rem 0 0 0;color:#111827;font-size:1.2rem;font-weight:bold;">{{ datos.usuarios_activos }}</p>
+          </div>
+          <div>
+            <strong style="color:#6b7280;font-size:0.85rem;">Sesiones:</strong>
+            <p style="margin:0.25rem 0 0 0;color:#111827;font-size:1.2rem;font-weight:bold;">{{ datos.sesiones }}</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Efectividad de Entrenadores -->
+{% if efectividad_entrenadores %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">🏋️ Efectividad de Entrenadores</h3>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+          <th style="padding:0.75rem;text-align:left;font-weight:600;color:#111827;">Entrenador</th>
+          <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Usuarios Asignados</th>
+          <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Sesiones Totales</th>
+          <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Promedio por Usuario</th>
+          <th style="padding:0.75rem;text-align:center;font-weight:600;color:#111827;">Recomendaciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in efectividad_entrenadores %}
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:0.75rem;">
+              <strong style="color:#111827;">{{ item.trainer.username }}</strong>
+              <div style="color:#6b7280;font-size:0.85rem;">
+                {{ item.info.first_name|default:"" }} {{ item.info.last_name|default:"" }}
+              </div>
+            </td>
+            <td style="padding:0.75rem;text-align:center;color:#111827;">{{ item.asignados }}</td>
+            <td style="padding:0.75rem;text-align:center;color:#111827;">{{ item.sesiones_totales }}</td>
+            <td style="padding:0.75rem;text-align:center;color:#111827;">{{ item.promedio_sesiones_por_usuario }}</td>
+            <td style="padding:0.75rem;text-align:center;color:#111827;">{{ item.recomendaciones }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Popularidad -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+  <!-- Ejercicios Más Populares -->
+  {% if popularidad_ejercicios %}
+  <div class="card">
+    <h3 style="margin:0 0 1rem 0;">💪 Ejercicios Más Populares</h3>
+    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+      {% for item in popularidad_ejercicios %}
+        <div style="padding:1rem;background:#f9fafb;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong style="color:#111827;">{{ item.exercise__nombre }}</strong>
+            <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+              {{ item.exercise__tipo|capfirst }}
+            </div>
+          </div>
+          <span class="badge badge-primary">{{ item.veces_usado }} veces</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Rutinas Más Populares -->
+  {% if popularidad_rutinas %}
+  <div class="card">
+    <h3 style="margin:0 0 1rem 0;">📋 Rutinas Más Populares</h3>
+    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+      {% for item in popularidad_rutinas %}
+        <div style="padding:1rem;background:#f9fafb;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+          <strong style="color:#111827;">{{ item.routine__nombre }}</strong>
+          <span class="badge badge-primary">{{ item.veces_usada }} veces</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Reserva - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% if espacio %}{% url 'espacio_detail' espacio.pk %}{% else %}{% url 'espacios_list' %}{% endif %}" class="btn btn-secondary">← Volver</a>
+</div>
+
+<div class="card" style="max-width:800px;margin:0 auto;">
+  <div style="margin-bottom:1.5rem;">
+    <h2 style="margin:0 0 0.5rem 0;">📅 Nueva Reserva</h2>
+    <p style="color:#6b7280;margin:0;">
+      {% if espacio %}
+        Reserva el espacio: <strong>{{ espacio.nombre }}</strong>
+      {% else %}
+        Reserva un espacio deportivo disponible.
+      {% endif %}
+    </p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div style="margin-bottom:1rem;">
+      <label for="id_espacio" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        🏋️ Espacio <span style="color:#ef4444;">*</span>
+      </label>
+      {{ form.espacio }}
+      {% if form.espacio.errors %}
+        <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+          {{ form.espacio.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label for="id_fecha_reserva" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        📅 Fecha de Reserva <span style="color:#ef4444;">*</span>
+      </label>
+      {{ form.fecha_reserva }}
+      {% if form.fecha_reserva.errors %}
+        <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+          {{ form.fecha_reserva.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div>
+        <label for="id_hora_inicio" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          ⏰ Hora de Inicio <span style="color:#ef4444;">*</span>
+        </label>
+        {{ form.hora_inicio }}
+        {% if form.hora_inicio.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.hora_inicio.errors }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="id_hora_fin" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          ⏰ Hora de Fin <span style="color:#ef4444;">*</span>
+        </label>
+        {{ form.hora_fin }}
+        {% if form.hora_fin.errors %}
+          <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+            {{ form.hora_fin.errors }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label for="id_notas" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+        📝 Notas (opcional)
+      </label>
+      {{ form.notas }}
+      {% if form.notas.errors %}
+        <div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
+          {{ form.notas.errors }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="display:flex;gap:1rem;">
+      <button type="submit" class="btn btn-primary">💾 Crear Reserva</button>
+      <a href="{% if espacio %}{% url 'espacio_detail' espacio.pk %}{% else %}{% url 'espacios_list' %}{% endif %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Asignación Avanzada de Entrenadores - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+  <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+</div>
+
+<div style="margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e5e7eb;">
+  <h1 style="margin:0 0 0.5rem 0;">👥 Asignación Avanzada de Entrenadores</h1>
+  <p style="color:#6b7280;margin:0;">Gestiona asignaciones con control de carga de trabajo</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+  <!-- Lista de Usuarios -->
+  <div class="card">
+    <h3 style="margin:0 0 1rem 0;">👤 Usuarios</h3>
+    <div style="max-height:600px;overflow-y:auto;">
+      {% if usuarios %}
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          {% for item in usuarios %}
+            <div id="user-{{ item.user.id }}" style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid {% if item.asignaciones.exists %}#10b981{% else %}#ef4444{% endif %};">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+                <div style="flex:1;">
+                  <strong style="color:#111827;">{{ item.user.username }}</strong>
+                  <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+                    {{ item.info.first_name|default:"" }} {{ item.info.last_name|default:"" }}
+                    {% if item.info.campus %}
+                      | 📍 {{ item.info.campus }}
+                    {% endif %}
+                  </div>
+                </div>
+                {% if item.asignaciones.exists %}
+                  <span class="badge badge-success">Con Entrenador</span>
+                {% else %}
+                  <span class="badge" style="background:#fee2e2;color:#991b1b;">Sin Entrenador</span>
+                {% endif %}
+              </div>
+              
+              {% if item.asignaciones.exists %}
+                <div style="margin-bottom:0.75rem;">
+                  <strong style="color:#6b7280;font-size:0.85rem;">Entrenador(es) asignado(s):</strong>
+                  {% for asignacion in item.asignaciones %}
+                    <div style="padding:0.5rem;background:white;border-radius:6px;margin-top:0.5rem;display:flex;justify-content:space-between;align-items:center;">
+                      <span style="color:#111827;">{{ asignacion.trainer.username }}</span>
+                      <form method="post" style="display:inline;" onsubmit="return confirm('¿Desactivar esta asignación?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_id" value="{{ item.user.id }}">
+                        <input type="hidden" name="trainer_id" value="{{ asignacion.trainer.id }}">
+                        <input type="hidden" name="accion" value="desactivar">
+                        <button type="submit" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;">❌ Desactivar</button>
+                      </form>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              
+              <!-- Formulario de Asignación -->
+              <form method="post" style="display:flex;gap:0.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ item.user.id }}">
+                <input type="hidden" name="accion" value="asignar">
+                <select name="trainer_id" class="form-control" style="flex:1;font-size:0.9rem;" required>
+                  <option value="">-- Seleccionar Entrenador --</option>
+                  {% for trainer_item in entrenadores %}
+                    <option value="{{ trainer_item.trainer.id }}">
+                      {{ trainer_item.trainer.username }} ({{ trainer_item.asignados_activos }} asignados)
+                    </option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary">✓ Asignar</button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>No hay usuarios disponibles.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Lista de Entrenadores con Carga -->
+  <div class="card">
+    <h3 style="margin:0 0 1rem 0;">🏋️ Entrenadores (Carga de Trabajo)</h3>
+    <div style="max-height:600px;overflow-y:auto;">
+      {% if entrenadores %}
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          {% for item in entrenadores %}
+            <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid {% if item.asignados_activos >= 10 %}#ef4444{% elif item.asignados_activos >= 5 %}#f59e0b{% else %}#10b981{% endif %};">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+                <div style="flex:1;">
+                  <strong style="color:#111827;">{{ item.trainer.username }}</strong>
+                  <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+                    {{ item.info.first_name|default:"" }} {{ item.info.last_name|default:"" }}
+                    {% if item.info.faculty %}
+                      | 🏛️ {{ item.info.faculty }}
+                    {% endif %}
+                  </div>
+                </div>
+                <span class="badge" style="background:{% if item.asignados_activos >= 10 %}#fee2e2{% elif item.asignados_activos >= 5 %}#fef3c7{% else %}#d1fae5{% endif %};color:{% if item.asignados_activos >= 10 %}#991b1b{% elif item.asignados_activos >= 5 %}#92400e{% else %}#065f46{% endif %};">
+                  {{ item.asignados_activos }} usuarios
+                </span>
+              </div>
+              <div style="color:#6b7280;font-size:0.85rem;">
+                {% if item.asignados_activos >= 10 %}
+                  ⚠️ Carga alta
+                {% elif item.asignados_activos >= 5 %}
+                  ⚡ Carga media
+                {% else %}
+                  ✓ Carga normal
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>No hay entrenadores disponibles.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Historial de Asignaciones -->
+<div style="margin-top:2rem;">
+  <a href="{% url 'admin_assignment_history' %}" class="btn btn-secondary">📜 Ver Historial de Asignaciones</a>
+</div>
+{% endblock %}
+

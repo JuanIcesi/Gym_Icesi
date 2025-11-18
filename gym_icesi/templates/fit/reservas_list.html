@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Mis Reservas - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
+  <h2 style="margin:0;">📅 Mis Reservas</h2>
+  <a href="{% url 'reserva_create' %}" class="btn btn-primary">➕ Nueva Reserva</a>
+</div>
+
+{% if reservas %}
+<div class="card">
+  <div style="display:flex;flex-direction:column;gap:1rem;">
+    {% for reserva in reservas %}
+      <div style="padding:1.5rem;background:#f9fafb;border-radius:8px;border-left:4px solid {% if reserva.estado == 'confirmada' %}#10b981{% elif reserva.estado == 'pendiente' %}#f59e0b{% else %}#ef4444{% endif %};">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+          <div>
+            <h4 style="margin:0 0 0.5rem 0;">{{ reserva.espacio.nombre }}</h4>
+            <div style="color:#6b7280;font-size:0.9rem;">
+              <span class="badge" style="background:#e0e7ff;color:#4338ca;">{{ reserva.espacio.get_tipo_display }}</span>
+              {% if reserva.espacio.ubicacion %}
+                | 📍 {{ reserva.espacio.ubicacion }}
+              {% endif %}
+            </div>
+          </div>
+          <span class="badge" style="background:{% if reserva.estado == 'confirmada' %}#d1fae5{% elif reserva.estado == 'pendiente' %}#fef3c7{% else %}#fee2e2{% endif %};color:{% if reserva.estado == 'confirmada' %}#065f46{% elif reserva.estado == 'pendiente' %}#92400e{% else %}#991b1b{% endif %};">
+            {{ reserva.get_estado_display }}
+          </span>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:0.75rem;">
+          <div>
+            <strong style="color:#6b7280;font-size:0.85rem;">📅 Fecha</strong>
+            <p style="margin:0.25rem 0 0 0;color:#111827;">{{ reserva.fecha_reserva|date:"l, d M Y" }}</p>
+          </div>
+          <div>
+            <strong style="color:#6b7280;font-size:0.85rem;">⏰ Horario</strong>
+            <p style="margin:0.25rem 0 0 0;color:#111827;">{{ reserva.hora_inicio|time:"H:i" }} - {{ reserva.hora_fin|time:"H:i" }}</p>
+          </div>
+          <div>
+            <strong style="color:#6b7280;font-size:0.85rem;">📅 Creada</strong>
+            <p style="margin:0.25rem 0 0 0;color:#111827;">{{ reserva.fecha_creacion|date:"d M Y" }}</p>
+          </div>
+        </div>
+        
+        {% if reserva.notas %}
+        <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:0.75rem;margin-bottom:0.75rem;">
+          <strong style="color:#6b7280;font-size:0.85rem;">📝 Notas:</strong>
+          <p style="margin:0.25rem 0 0 0;color:#111827;">{{ reserva.notas }}</p>
+        </div>
+        {% endif %}
+        
+        {% if reserva.estado != 'cancelada' %}
+        <div style="margin-top:0.75rem;">
+          <a href="{% url 'reserva_cancel' reserva.pk %}" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="return confirm('¿Estás seguro de cancelar esta reserva?');">❌ Cancelar Reserva</a>
+        </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <p>No tienes reservas registradas.</p>
+    <a href="{% url 'reserva_create' %}" class="btn btn-primary">Crear Primera Reserva</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

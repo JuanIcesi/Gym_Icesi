@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.db import connection
 from django.db.models import Count, Sum, Max, Avg, Q
 from django.db import models as django_models
+from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 
 from .models import (
@@ -19,8 +20,20 @@ from .models import (
     UserMonthlyStats,
     TrainerMonthlyStats,
     TrainerRecommendation,
+    UserProfile,
+    Message,
+    EventoInstitucional,
+    InscripcionEvento,
+    EspacioDeportivo,
+    ReservaEspacio,
+    AssignmentHistory,
+    ContentModeration,
+    SystemConfig,
 )
-from .forms import RoutineForm, RoutineItemForm, ProgressForm, ExerciseForm, TrainerRecommendationForm
+from .forms import (
+    RoutineForm, RoutineItemForm, ProgressForm, ExerciseForm, TrainerRecommendationForm,
+    UserProfileForm, MessageForm, ReservaEspacioForm
+)
 from fit.institutional_models import InstitutionalUser
 from fit.mongodb_service import (
     ProgressLogService,
@@ -1846,3 +1859,961 @@ def recommendations_list(request):
 
 # Las señales para actualización automática de estadísticas están en fit/signals.py
 # y se cargan automáticamente desde apps.py cuando Django inicia la aplicación
+
+# ==================== NUEVAS FUNCIONALIDADES ====================
+
+# ------------------------- Perfil de Salud -------------------------
+@login_required
+def profile_health(request):
+    """Vista para configurar/actualizar perfil de salud"""
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == "POST":
+        form = UserProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil de salud actualizado correctamente.")
+            return redirect("home")
+    else:
+        form = UserProfileForm(instance=profile)
+    
+    return render(request, "fit/profile_health.html", {"form": form, "profile": profile})
+
+# ------------------------- Mensajería -------------------------
+@login_required
+def messages_list(request):
+    """Lista de mensajes recibidos y enviados"""
+    received = Message.objects.filter(destinatario=request.user).order_by("-fecha")
+    sent = Message.objects.filter(remitente=request.user).order_by("-fecha")
+    unread_count = received.filter(leido=False).count()
+    
+    return render(request, "fit/messages_list.html", {
+        "received": received,
+        "sent": sent,
+        "unread_count": unread_count,
+    })
+
+@login_required
+def message_create(request):
+    """Crear nuevo mensaje"""
+    if request.method == "POST":
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            msg = form.save(commit=False)
+            msg.remitente = request.user
+            msg.save()
+            messages.success(request, "Mensaje enviado correctamente.")
+            return redirect("messages_list")
+    else:
+        form = MessageForm()
+        # Filtrar destinatarios: solo entrenadores asignados o el entrenador del usuario
+        if not request.user.is_staff:
+            # Usuario estándar: solo puede enviar a su entrenador
+            trainer_assignment = TrainerAssignment.objects.filter(
+                user=request.user, activo=True
+            ).select_related("trainer").first()
+            if trainer_assignment:
+                form.fields['destinatario'].queryset = User.objects.filter(
+                    id=trainer_assignment.trainer.id
+                )
+            else:
+                form.fields['destinatario'].queryset = User.objects.none()
+        else:
+            # Entrenador: puede enviar a sus usuarios asignados
+            assigned_users = TrainerAssignment.objects.filter(
+                trainer=request.user, activo=True
+            ).values_list('user_id', flat=True)
+            form.fields['destinatario'].queryset = User.objects.filter(id__in=assigned_users)
+    
+    return render(request, "fit/message_form.html", {"form": form})
+
+@login_required
+def message_detail(request, pk):
+    """Detalle de un mensaje"""
+    message = get_object_or_404(Message, pk=pk)
+    
+    # Solo el remitente o destinatario pueden ver el mensaje
+    if message.remitente != request.user and message.destinatario != request.user:
+        messages.error(request, "No tienes permiso para ver este mensaje.")
+        return redirect("messages_list")
+    
+    # Marcar como leído si el usuario es el destinatario
+    if message.destinatario == request.user and not message.leido:
+        message.leido = True
+        message.save()
+    
+    return render(request, "fit/message_detail.html", {"message": message})
+
+# ------------------------- Calendario y Eventos -------------------------
+@login_required
+def eventos_list(request):
+    """Lista de eventos y talleres institucionales"""
+    hoy = date.today()
+    eventos_proximos = EventoInstitucional.objects.filter(
+        activo=True, fecha_inicio__gte=hoy
+    ).order_by("fecha_inicio")
+    
+    eventos_pasados = EventoInstitucional.objects.filter(
+        activo=True, fecha_fin__lt=hoy
+    ).order_by("-fecha_inicio")[:10]
+    
+    # Eventos en los que el usuario está inscrito
+    inscripciones = InscripcionEvento.objects.filter(usuario=request.user).values_list('evento_id', flat=True)
+    
+    return render(request, "fit/eventos_list.html", {
+        "eventos_proximos": eventos_proximos,
+        "eventos_pasados": eventos_pasados,
+        "inscripciones": inscripciones,
+    })
+
+@login_required
+def evento_detail(request, pk):
+    """Detalle de un evento"""
+    evento = get_object_or_404(EventoInstitucional, pk=pk, activo=True)
+    inscrito = InscripcionEvento.objects.filter(usuario=request.user, evento=evento).exists()
+    inscripciones_count = evento.inscripciones.count()
+    
+    return render(request, "fit/evento_detail.html", {
+        "evento": evento,
+        "inscrito": inscrito,
+        "inscripciones_count": inscripciones_count,
+    })
+
+@login_required
+def evento_inscribir(request, pk):
+    """Inscribirse a un evento"""
+    evento = get_object_or_404(EventoInstitucional, pk=pk, activo=True)
+    
+    # Verificar capacidad
+    if evento.capacidad_maxima:
+        inscripciones_count = evento.inscripciones.count()
+        if inscripciones_count >= evento.capacidad_maxima:
+            messages.error(request, "Este evento ya alcanzó su capacidad máxima.")
+            return redirect("evento_detail", pk=pk)
+    
+    # Crear inscripción
+    inscripcion, created = InscripcionEvento.objects.get_or_create(
+        usuario=request.user,
+        evento=evento
+    )
+    
+    if created:
+        messages.success(request, f"Te has inscrito al evento: {evento.titulo}")
+    else:
+        messages.info(request, "Ya estabas inscrito a este evento.")
+    
+    return redirect("evento_detail", pk=pk)
+
+@login_required
+def evento_desinscribir(request, pk):
+    """Desinscribirse de un evento"""
+    evento = get_object_or_404(EventoInstitucional, pk=pk)
+    InscripcionEvento.objects.filter(usuario=request.user, evento=evento).delete()
+    messages.success(request, f"Te has desinscrito del evento: {evento.titulo}")
+    return redirect("evento_detail", pk=pk)
+
+# ------------------------- Espacios y Reservas -------------------------
+@login_required
+def espacios_list(request):
+    """Lista de espacios deportivos disponibles"""
+    espacios = EspacioDeportivo.objects.filter(activo=True).order_by("nombre")
+    return render(request, "fit/espacios_list.html", {"espacios": espacios})
+
+@login_required
+def espacio_detail(request, pk):
+    """Detalle de un espacio deportivo"""
+    espacio = get_object_or_404(EspacioDeportivo, pk=pk, activo=True)
+    reservas = ReservaEspacio.objects.filter(
+        espacio=espacio,
+        fecha_reserva__gte=date.today()
+    ).order_by("fecha_reserva", "hora_inicio")
+    
+    return render(request, "fit/espacio_detail.html", {
+        "espacio": espacio,
+        "reservas": reservas,
+    })
+
+@login_required
+def reserva_create(request, espacio_id=None):
+    """Crear una reserva de espacio"""
+    espacio = None
+    if espacio_id:
+        espacio = get_object_or_404(EspacioDeportivo, pk=espacio_id, activo=True)
+    
+    if request.method == "POST":
+        form = ReservaEspacioForm(request.POST)
+        if form.is_valid():
+            reserva = form.save(commit=False)
+            reserva.usuario = request.user
+            
+            # Verificar conflictos de horario
+            conflictos = ReservaEspacio.objects.filter(
+                espacio=reserva.espacio,
+                fecha_reserva=reserva.fecha_reserva,
+                estado__in=['pendiente', 'confirmada'],
+            ).exclude(
+                hora_fin__lte=reserva.hora_inicio
+            ).exclude(
+                hora_inicio__gte=reserva.hora_fin
+            )
+            
+            if conflictos.exists():
+                messages.error(request, "Este espacio ya está reservado en ese horario.")
+            else:
+                reserva.save()
+                messages.success(request, "Reserva creada correctamente.")
+                return redirect("reservas_list")
+    else:
+        form = ReservaEspacioForm()
+        if espacio:
+            form.fields['espacio'].initial = espacio
+    
+    return render(request, "fit/reserva_form.html", {"form": form, "espacio": espacio})
+
+@login_required
+def reservas_list(request):
+    """Lista de reservas del usuario"""
+    reservas = ReservaEspacio.objects.filter(
+        usuario=request.user
+    ).order_by("-fecha_reserva", "-hora_inicio")
+    
+    return render(request, "fit/reservas_list.html", {"reservas": reservas})
+
+@login_required
+def reserva_cancel(request, pk):
+    """Cancelar una reserva"""
+    reserva = get_object_or_404(ReservaEspacio, pk=pk, usuario=request.user)
+    reserva.estado = 'cancelada'
+    reserva.save()
+    messages.success(request, "Reserva cancelada correctamente.")
+    return redirect("reservas_list")
+
+# ------------------------- Recordatorios de Rutinas -------------------------
+@login_required
+def routine_reminders(request):
+    """Recordatorios de rutinas pendientes"""
+    hoy = date.today()
+    rutinas = Routine.objects.filter(user=request.user)
+    
+    recordatorios = []
+    for rutina in rutinas:
+        # Obtener última vez que se entrenó esta rutina
+        ultimo_progreso = ProgressLog.objects.filter(
+            routine=rutina, user=request.user
+        ).order_by("-fecha").first()
+        
+        dias_sin_entrenar = None
+        if ultimo_progreso:
+            dias_sin_entrenar = (hoy - ultimo_progreso.fecha).days
+        else:
+            # Nunca se ha entrenado
+            dias_sin_entrenar = (hoy - rutina.fecha_creacion.date()).days
+        
+        # Verificar frecuencia
+        necesita_recordatorio = False
+        if rutina.frecuencia == 'diaria' and dias_sin_entrenar >= 1:
+            necesita_recordatorio = True
+        elif rutina.frecuencia == 'semanal' and dias_sin_entrenar >= 7:
+            necesita_recordatorio = True
+        elif rutina.frecuencia == 'personalizada' and rutina.dias_semana:
+            # Verificar si hoy es uno de los días programados
+            dias_programados = [d.strip().upper() for d in rutina.dias_semana.split(',')]
+            dia_actual = hoy.strftime('%A')[:1].upper()  # L, M, X, J, V, S, D
+            if dia_actual in dias_programados and dias_sin_entrenar >= 1:
+                necesita_recordatorio = True
+        
+        if necesita_recordatorio:
+            recordatorios.append({
+                "rutina": rutina,
+                "dias_sin_entrenar": dias_sin_entrenar,
+                "ultimo_progreso": ultimo_progreso,
+            })
+    
+    return render(request, "fit/routine_reminders.html", {"recordatorios": recordatorios})
+
+# ==================== FUNCIONALIDADES AVANZADAS PARA ENTRENADORES ====================
+
+# ------------------------- Análisis Detallado de Progreso -------------------------
+@login_required
+@user_passes_test(is_trainer)
+def trainer_progress_analysis(request, user_id):
+    """
+    Análisis detallado del progreso de un usuario asignado con gráficos y métricas.
+    """
+    tuser = get_object_or_404(User, pk=user_id)
+    trainer = request.user
+    
+    # Verificar asignación
+    assignment = TrainerAssignment.objects.filter(
+        trainer=trainer,
+        user=tuser,
+        activo=True
+    ).first()
+    
+    if not assignment:
+        messages.error(request, "Este usuario no está asignado a ti.")
+        return redirect("trainer_assignees")
+    
+    user_info = get_institutional_info(tuser.username)
+    
+    # Progreso completo del usuario
+    all_progress = ProgressLog.objects.filter(user=tuser).order_by("fecha")
+    
+    # Métricas generales
+    total_sesiones = all_progress.count()
+    total_tiempo = all_progress.aggregate(Sum("tiempo_seg"))["tiempo_seg__sum"] or 0
+    total_tiempo_horas = round(total_tiempo / 3600, 1)
+    promedio_esfuerzo = all_progress.aggregate(Avg("esfuerzo"))["esfuerzo__avg"] or 0
+    promedio_esfuerzo = round(promedio_esfuerzo, 1)
+    
+    # Progreso por mes (últimos 6 meses)
+    hoy = date.today()
+    progreso_mensual = []
+    for i in range(6):
+        mes_fecha = date(hoy.year, hoy.month - i, 1) if hoy.month > i else date(hoy.year - 1, 12 + hoy.month - i, 1)
+        sesiones_mes = all_progress.filter(
+            fecha__year=mes_fecha.year,
+            fecha__month=mes_fecha.month
+        )
+        progreso_mensual.append({
+            "mes": mes_fecha.strftime("%b %Y"),
+            "sesiones": sesiones_mes.count(),
+            "tiempo_total": sesiones_mes.aggregate(Sum("tiempo_seg"))["tiempo_seg__sum"] or 0,
+            "esfuerzo_promedio": round(sesiones_mes.aggregate(Avg("esfuerzo"))["esfuerzo__avg"] or 0, 1),
+        })
+    progreso_mensual.reverse()
+    
+    # Progreso por rutina
+    progreso_por_rutina = []
+    rutinas_usuario = Routine.objects.filter(user=tuser)
+    for rutina in rutinas_usuario:
+        progreso_rutina = all_progress.filter(routine=rutina)
+        if progreso_rutina.exists():
+            progreso_por_rutina.append({
+                "rutina": rutina,
+                "sesiones": progreso_rutina.count(),
+                "ultima_sesion": progreso_rutina.order_by("-fecha").first().fecha,
+                "esfuerzo_promedio": round(progreso_rutina.aggregate(Avg("esfuerzo"))["esfuerzo__avg"] or 0, 1),
+            })
+    
+    # Progreso por tipo de ejercicio (basado en rutinas)
+    progreso_por_tipo = {}
+    for progress in all_progress:
+        rutina = progress.routine
+        items = rutina.items.all()
+        for item in items:
+            tipo = item.exercise.tipo
+            if tipo not in progreso_por_tipo:
+                progreso_por_tipo[tipo] = {"sesiones": 0, "tiempo": 0}
+            progreso_por_tipo[tipo]["sesiones"] += 1
+            if progress.tiempo_seg:
+                progreso_por_tipo[tipo]["tiempo"] += progress.tiempo_seg
+    
+    # Identificar tendencias y estancamientos
+    tendencias = []
+    if len(progreso_mensual) >= 2:
+        ultimo_mes = progreso_mensual[-1]
+        penultimo_mes = progreso_mensual[-2]
+        
+        if ultimo_mes["sesiones"] > penultimo_mes["sesiones"]:
+            tendencias.append({
+                "tipo": "positiva",
+                "mensaje": f"Mejora en frecuencia: {ultimo_mes['sesiones']} sesiones vs {penultimo_mes['sesiones']} el mes anterior"
+            })
+        elif ultimo_mes["sesiones"] < penultimo_mes["sesiones"]:
+            tendencias.append({
+                "tipo": "negativa",
+                "mensaje": f"Reducción en frecuencia: {ultimo_mes['sesiones']} sesiones vs {penultimo_mes['sesiones']} el mes anterior"
+            })
+        
+        if ultimo_mes["esfuerzo_promedio"] > penultimo_mes["esfuerzo_promedio"]:
+            tendencias.append({
+                "tipo": "positiva",
+                "mensaje": f"Aumento en intensidad: esfuerzo promedio {ultimo_mes['esfuerzo_promedio']} vs {penultimo_mes['esfuerzo_promedio']}"
+            })
+    
+    # Alertas de bajo rendimiento
+    alertas = []
+    if total_sesiones > 0:
+        ultima_sesion = all_progress.order_by("-fecha").first()
+        dias_sin_entrenar = (hoy - ultima_sesion.fecha).days
+        
+        if dias_sin_entrenar > 7:
+            alertas.append({
+                "tipo": "inactividad",
+                "severidad": "alta" if dias_sin_entrenar > 14 else "media",
+                "mensaje": f"Sin actividad durante {dias_sin_entrenar} días"
+            })
+        
+        sesiones_este_mes = all_progress.filter(
+            fecha__year=hoy.year,
+            fecha__month=hoy.month
+        ).count()
+        
+        if sesiones_este_mes < 4:
+            alertas.append({
+                "tipo": "baja_frecuencia",
+                "severidad": "media",
+                "mensaje": f"Solo {sesiones_este_mes} sesiones este mes (recomendado: mínimo 8-12)"
+            })
+        
+        if promedio_esfuerzo < 4:
+            alertas.append({
+                "tipo": "baja_intensidad",
+                "severidad": "baja",
+                "mensaje": f"Esfuerzo promedio bajo ({promedio_esfuerzo}/10). Considera aumentar la intensidad."
+            })
+    
+    return render(request, "fit/trainer_progress_analysis.html", {
+        "tuser": tuser,
+        "user_info": user_info,
+        "total_sesiones": total_sesiones,
+        "total_tiempo_horas": total_tiempo_horas,
+        "promedio_esfuerzo": promedio_esfuerzo,
+        "progreso_mensual": progreso_mensual,
+        "progreso_por_rutina": progreso_por_rutina,
+        "progreso_por_tipo": progreso_por_tipo,
+        "tendencias": tendencias,
+        "alertas": alertas,
+        "all_progress": all_progress[:20],  # Últimas 20 sesiones
+    })
+
+# ------------------------- Recomendación Avanzada -------------------------
+@login_required
+@user_passes_test(is_trainer)
+def trainer_recommendation_advanced(request, user_id):
+    """
+    Sistema avanzado de recomendaciones con ajustes de intensidad/dificultad.
+    """
+    tuser = get_object_or_404(User, pk=user_id)
+    trainer = request.user
+    
+    # Verificar asignación
+    assignment = TrainerAssignment.objects.filter(
+        trainer=trainer,
+        user=tuser,
+        activo=True
+    ).first()
+    
+    if not assignment:
+        messages.error(request, "Este usuario no está asignado a ti.")
+        return redirect("trainer_assignees")
+    
+    if request.method == "POST":
+        form = TrainerRecommendationForm(request.POST)
+        if form.is_valid():
+            rec = form.save(commit=False)
+            rec.trainer = trainer
+            rec.user = tuser
+            
+            # Campos adicionales si se proporcionan
+            routine_id = request.POST.get("routine_id")
+            progress_id = request.POST.get("progress_id")
+            ajuste_intensidad = request.POST.get("ajuste_intensidad")
+            ajuste_dificultad = request.POST.get("ajuste_dificultad")
+            
+            if routine_id:
+                rec.routine = get_object_or_404(Routine, pk=routine_id)
+            if progress_id:
+                rec.progress_log = get_object_or_404(ProgressLog, pk=progress_id)
+            
+            rec.save()
+            
+            # Actualizar estadísticas mensuales
+            hoy = date.today()
+            stats, _ = TrainerMonthlyStats.objects.get_or_create(
+                trainer=trainer,
+                anio=hoy.year,
+                mes=hoy.month
+            )
+            stats.seguimientos_realizados += 1
+            stats.save()
+            
+            messages.success(request, "Recomendación enviada correctamente.")
+            return redirect("trainer_feedback", user_id=user_id)
+    else:
+        form = TrainerRecommendationForm()
+    
+    # Obtener rutinas y progresos del usuario para asociar
+    rutinas = Routine.objects.filter(user=tuser)
+    progresos_recientes = ProgressLog.objects.filter(user=tuser).order_by("-fecha")[:10]
+    
+    return render(request, "fit/trainer_recommendation_advanced.html", {
+        "tuser": tuser,
+        "form": form,
+        "rutinas": rutinas,
+        "progresos_recientes": progresos_recientes,
+    })
+
+# ==================== FUNCIONALIDADES AVANZADAS PARA ADMINISTRADOR ====================
+
+# ------------------------- Gestión de Usuarios -------------------------
+@login_required
+@user_passes_test(is_admin)
+def admin_users_management(request):
+    """
+    Panel completo de gestión de usuarios con filtros avanzados.
+    """
+    # Obtener todos los usuarios
+    users = User.objects.filter(is_superuser=False).order_by("username")
+    
+    # Filtros
+    search_query = request.GET.get("q", "")
+    role_filter = request.GET.get("role", "")
+    program_filter = request.GET.get("program", "")
+    campus_filter = request.GET.get("campus", "")
+    activity_filter = request.GET.get("activity", "")
+    
+    if search_query:
+        users = users.filter(username__icontains=search_query)
+    
+    # Agregar información institucional y filtrar
+    users_with_info = []
+    for user in users:
+        user_info = get_institutional_info(user.username)
+        
+        # Filtro por rol
+        if role_filter:
+            if role_filter == "student" and user_info.get("role") != "STUDENT":
+                continue
+            elif role_filter == "employee" and user_info.get("role") != "EMPLOYEE":
+                continue
+            elif role_filter == "trainer" and not user.is_staff:
+                continue
+        
+        # Filtro por programa (solo estudiantes)
+        if program_filter and user_info.get("role") == "STUDENT":
+            # Aquí necesitarías consultar la tabla students para obtener el programa
+            # Por ahora, lo omitimos
+            pass
+        
+        # Filtro por campus
+        if campus_filter and user_info.get("campus") != campus_filter:
+            continue
+        
+        # Filtro por actividad
+        if activity_filter:
+            hoy = date.today()
+            sesiones_mes = ProgressLog.objects.filter(
+                user=user,
+                fecha__year=hoy.year,
+                fecha__month=hoy.month
+            ).count()
+            
+            if activity_filter == "high" and sesiones_mes < 10:
+                continue
+            elif activity_filter == "medium" and (sesiones_mes < 5 or sesiones_mes >= 10):
+                continue
+            elif activity_filter == "low" and sesiones_mes >= 5:
+                continue
+            elif activity_filter == "inactive" and sesiones_mes > 0:
+                continue
+        
+        # Estadísticas del usuario
+        total_sesiones = ProgressLog.objects.filter(user=user).count()
+        rutinas_count = Routine.objects.filter(user=user).count()
+        tiene_entrenador = TrainerAssignment.objects.filter(user=user, activo=True).exists()
+        
+        users_with_info.append({
+            "user": user,
+            "info": user_info,
+            "total_sesiones": total_sesiones,
+            "rutinas_count": rutinas_count,
+            "tiene_entrenador": tiene_entrenador,
+        })
+    
+    # Obtener opciones para filtros (campus, programas, etc.)
+    campuses = []
+    try:
+        with connection.cursor() as cur:
+            cur.execute("SELECT DISTINCT name FROM campuses ORDER BY name")
+            campuses = [row[0] for row in cur.fetchall()]
+    except Exception:
+        pass
+    
+    return render(request, "fit/admin_users_management.html", {
+        "users": users_with_info,
+        "search_query": search_query,
+        "role_filter": role_filter,
+        "program_filter": program_filter,
+        "campus_filter": campus_filter,
+        "activity_filter": activity_filter,
+        "campuses": campuses,
+    })
+
+# ------------------------- Asignación Avanzada de Entrenadores -------------------------
+@login_required
+@user_passes_test(is_admin)
+def admin_assign_trainer_advanced(request):
+    """
+    Sistema avanzado de asignación de entrenadores con gestión de carga de trabajo.
+    """
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        trainer_id = request.POST.get("trainer_id")
+        accion = request.POST.get("accion")
+        
+        if user_id and trainer_id:
+            user = get_object_or_404(User, pk=user_id)
+            trainer = get_object_or_404(User, pk=trainer_id)
+            
+            if accion == "asignar":
+                # Verificar si ya existe una asignación activa
+                existing = TrainerAssignment.objects.filter(
+                    user=user, trainer=trainer, activo=True
+                ).first()
+                
+                if existing:
+                    messages.info(request, f"El usuario {user.username} ya tiene asignado a {trainer.username}.")
+                else:
+                    # Desactivar otras asignaciones activas del mismo usuario
+                    TrainerAssignment.objects.filter(user=user, activo=True).update(activo=False)
+                    
+                    # Crear nueva asignación
+                    assignment = TrainerAssignment.objects.create(
+                        user=user,
+                        trainer=trainer,
+                        activo=True
+                    )
+                    
+                    # Registrar en historial
+                    AssignmentHistory.objects.create(
+                        assignment=assignment,
+                        accion="creada",
+                        administrador=request.user,
+                        notas=f"Asignación creada por {request.user.username}"
+                    )
+                    
+                    messages.success(request, f"Entrenador {trainer.username} asignado a {user.username}.")
+            
+            elif accion == "desactivar":
+                assignment = TrainerAssignment.objects.filter(
+                    user=user, trainer=trainer, activo=True
+                ).first()
+                
+                if assignment:
+                    assignment.activo = False
+                    assignment.save()
+                    
+                    # Registrar en historial
+                    AssignmentHistory.objects.create(
+                        assignment=assignment,
+                        accion="desactivada",
+                        administrador=request.user,
+                        notas=f"Asignación desactivada por {request.user.username}"
+                    )
+                    
+                    messages.success(request, f"Asignación desactivada.")
+    
+    # Obtener usuarios y entrenadores
+    usuarios = User.objects.filter(is_staff=False, is_superuser=False).order_by("username")
+    entrenadores = User.objects.filter(is_staff=True, is_superuser=False).order_by("username")
+    
+    # Agregar información de carga de trabajo para entrenadores
+    entrenadores_con_carga = []
+    for trainer in entrenadores:
+        asignados_activos = TrainerAssignment.objects.filter(trainer=trainer, activo=True).count()
+        entrenadores_con_carga.append({
+            "trainer": trainer,
+            "asignados_activos": asignados_activos,
+            "info": get_institutional_info(trainer.username),
+        })
+    
+    # Agregar información de asignaciones para usuarios
+    usuarios_con_info = []
+    for user in usuarios:
+        asignaciones = TrainerAssignment.objects.filter(user=user, activo=True).select_related("trainer")
+        usuarios_con_info.append({
+            "user": user,
+            "info": get_institutional_info(user.username),
+            "asignaciones": asignaciones,
+        })
+    
+    return render(request, "fit/admin_assign_trainer_advanced.html", {
+        "usuarios": usuarios_con_info,
+        "entrenadores": entrenadores_con_carga,
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def admin_assignment_history(request):
+    """
+    Historial completo de cambios en asignaciones.
+    """
+    historial = AssignmentHistory.objects.select_related(
+        "assignment", "assignment__user", "assignment__trainer", "administrador"
+    ).order_by("-fecha")
+    
+    # Filtros
+    user_filter = request.GET.get("user", "")
+    trainer_filter = request.GET.get("trainer", "")
+    accion_filter = request.GET.get("accion", "")
+    
+    if user_filter:
+        historial = historial.filter(assignment__user__username__icontains=user_filter)
+    if trainer_filter:
+        historial = historial.filter(assignment__trainer__username__icontains=trainer_filter)
+    if accion_filter:
+        historial = historial.filter(accion=accion_filter)
+    
+    return render(request, "fit/admin_assignment_history.html", {
+        "historial": historial,
+        "user_filter": user_filter,
+        "trainer_filter": trainer_filter,
+        "accion_filter": accion_filter,
+    })
+
+# ------------------------- Gestión de Contenido Global -------------------------
+@login_required
+@user_passes_test(is_admin)
+def admin_content_moderation(request):
+    """
+    Panel de moderación de ejercicios y rutinas.
+    """
+    # Ejercicios pendientes de moderación
+    ejercicios_pendientes = Exercise.objects.filter(
+        es_personalizado=True
+    ).exclude(
+        id__in=ContentModeration.objects.filter(
+            tipo_contenido="exercise", estado="aprobado"
+        ).values_list("contenido_id", flat=True)
+    )
+    
+    # Rutinas pendientes de moderación
+    rutinas_pendientes = Routine.objects.filter(
+        es_predisenada=True
+    ).exclude(
+        id__in=ContentModeration.objects.filter(
+            tipo_contenido="routine", estado="aprobado"
+        ).values_list("contenido_id", flat=True)
+    )
+    
+    # Contenido moderado recientemente
+    moderaciones_recientes = ContentModeration.objects.select_related("moderador").order_by("-fecha_revision")[:20]
+    
+    return render(request, "fit/admin_content_moderation.html", {
+        "ejercicios_pendientes": ejercicios_pendientes,
+        "rutinas_pendientes": rutinas_pendientes,
+        "moderaciones_recientes": moderaciones_recientes,
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def admin_moderate_content(request, tipo, contenido_id):
+    """
+    Aprobar o rechazar contenido específico.
+    """
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        comentarios = request.POST.get("comentarios", "")
+        
+        # Obtener o crear registro de moderación
+        moderacion, created = ContentModeration.objects.get_or_create(
+            tipo_contenido=tipo,
+            contenido_id=contenido_id,
+            defaults={"estado": "pendiente"}
+        )
+        
+        if accion == "aprobar":
+            moderacion.estado = "aprobado"
+            moderacion.moderador = request.user
+            moderacion.fecha_revision = timezone.now()
+            moderacion.comentarios = comentarios
+            moderacion.save()
+            messages.success(request, "Contenido aprobado correctamente.")
+        elif accion == "rechazar":
+            moderacion.estado = "rechazado"
+            moderacion.moderador = request.user
+            moderacion.fecha_revision = timezone.now()
+            moderacion.comentarios = comentarios
+            moderacion.save()
+            
+            # Opcional: eliminar el contenido rechazado
+            if tipo == "exercise":
+                Exercise.objects.filter(id=contenido_id).delete()
+            elif tipo == "routine":
+                Routine.objects.filter(id=contenido_id).delete()
+            
+            messages.success(request, "Contenido rechazado y eliminado.")
+        elif accion == "editar":
+            moderacion.estado = "editado"
+            moderacion.moderador = request.user
+            moderacion.fecha_revision = timezone.now()
+            moderacion.comentarios = comentarios
+            moderacion.save()
+            messages.success(request, "Contenido marcado como editado.")
+        
+        return redirect("admin_content_moderation")
+    
+    # Obtener el contenido
+    if tipo == "exercise":
+        contenido = get_object_or_404(Exercise, pk=contenido_id)
+    elif tipo == "routine":
+        contenido = get_object_or_404(Routine, pk=contenido_id)
+    else:
+        messages.error(request, "Tipo de contenido inválido.")
+        return redirect("admin_content_moderation")
+    
+    return render(request, "fit/admin_moderate_content.html", {
+        "tipo": tipo,
+        "contenido": contenido,
+    })
+
+# ------------------------- Reportes y Analytics Avanzados -------------------------
+@login_required
+@user_passes_test(is_admin)
+def admin_analytics(request):
+    """
+    Reportes y analytics avanzados del sistema.
+    """
+    hoy = date.today()
+    
+    # Métricas generales del sistema
+    total_usuarios = User.objects.filter(is_staff=False, is_superuser=False).count()
+    total_entrenadores = User.objects.filter(is_staff=True, is_superuser=False).count()
+    total_rutinas = Routine.objects.count()
+    total_ejercicios = Exercise.objects.count()
+    total_sesiones = ProgressLog.objects.count()
+    
+    # Actividad por mes (últimos 12 meses)
+    actividad_mensual = []
+    for i in range(12):
+        mes_fecha = date(hoy.year, hoy.month - i, 1) if hoy.month > i else date(hoy.year - 1, 12 + hoy.month - i, 1)
+        sesiones_mes = ProgressLog.objects.filter(
+            fecha__year=mes_fecha.year,
+            fecha__month=mes_fecha.month
+        ).count()
+        usuarios_activos_mes = ProgressLog.objects.filter(
+            fecha__year=mes_fecha.year,
+            fecha__month=mes_fecha.month
+        ).values("user").distinct().count()
+        actividad_mensual.append({
+            "mes": mes_fecha.strftime("%b %Y"),
+            "sesiones": sesiones_mes,
+            "usuarios_activos": usuarios_activos_mes,
+        })
+    actividad_mensual.reverse()
+    
+    # Actividad por facultad/departamento
+    actividad_por_facultad = {}
+    try:
+        with connection.cursor() as cur:
+            # Obtener sesiones de usuarios con información de facultad
+            cur.execute("""
+                SELECT f.name, COUNT(DISTINCT pl.user_id) as usuarios_activos, COUNT(pl.id) as sesiones
+                FROM fit_progresslog pl
+                JOIN auth_user u ON pl.user_id = u.id
+                JOIN users usr ON u.username = usr.username
+                LEFT JOIN students s ON usr.student_id = s.id
+                LEFT JOIN employees e ON usr.employee_id = e.id
+                LEFT JOIN faculties f ON COALESCE(s.faculty_code, e.faculty_code) = f.code
+                WHERE pl.fecha >= CURRENT_DATE - INTERVAL '30 days'
+                GROUP BY f.name
+                ORDER BY sesiones DESC
+            """)
+            for row in cur.fetchall():
+                if row[0]:  # Si hay nombre de facultad
+                    actividad_por_facultad[row[0]] = {
+                        "usuarios_activos": row[1],
+                        "sesiones": row[2],
+                    }
+    except Exception:
+        pass
+    
+    # Efectividad de entrenadores
+    efectividad_entrenadores = []
+    entrenadores = User.objects.filter(is_staff=True, is_superuser=False)
+    for trainer in entrenadores:
+        asignados = TrainerAssignment.objects.filter(trainer=trainer, activo=True).count()
+        if asignados > 0:
+            # Progreso promedio de usuarios asignados
+            usuarios_asignados = TrainerAssignment.objects.filter(
+                trainer=trainer, activo=True
+            ).values_list("user_id", flat=True)
+            
+            sesiones_totales = ProgressLog.objects.filter(
+                user_id__in=usuarios_asignados
+            ).count()
+            
+            recomendaciones = TrainerRecommendation.objects.filter(trainer=trainer).count()
+            
+            efectividad_entrenadores.append({
+                "trainer": trainer,
+                "info": get_institutional_info(trainer.username),
+                "asignados": asignados,
+                "sesiones_totales": sesiones_totales,
+                "recomendaciones": recomendaciones,
+                "promedio_sesiones_por_usuario": round(sesiones_totales / asignados, 1) if asignados > 0 else 0,
+            })
+    
+    efectividad_entrenadores.sort(key=lambda x: x["promedio_sesiones_por_usuario"], reverse=True)
+    
+    # Popularidad de ejercicios
+    popularidad_ejercicios = RoutineItem.objects.values(
+        "exercise__nombre", "exercise__tipo"
+    ).annotate(
+        veces_usado=Count("id")
+    ).order_by("-veces_usado")[:10]
+    
+    # Popularidad de rutinas
+    popularidad_rutinas = ProgressLog.objects.values(
+        "routine__nombre"
+    ).annotate(
+        veces_usada=Count("id")
+    ).order_by("-veces_usada")[:10]
+    
+    # Tendencias temporales
+    tendencias = {
+        "crecimiento_usuarios": total_usuarios,  # Simplificado
+        "crecimiento_sesiones": total_sesiones,  # Simplificado
+    }
+    
+    return render(request, "fit/admin_analytics.html", {
+        "total_usuarios": total_usuarios,
+        "total_entrenadores": total_entrenadores,
+        "total_rutinas": total_rutinas,
+        "total_ejercicios": total_ejercicios,
+        "total_sesiones": total_sesiones,
+        "actividad_mensual": actividad_mensual,
+        "actividad_por_facultad": actividad_por_facultad,
+        "efectividad_entrenadores": efectividad_entrenadores,
+        "popularidad_ejercicios": popularidad_ejercicios,
+        "popularidad_rutinas": popularidad_rutinas,
+        "tendencias": tendencias,
+    })
+
+# ------------------------- Configuración del Sistema -------------------------
+@login_required
+@user_passes_test(is_admin)
+def admin_system_config(request):
+    """
+    Configuración global del sistema.
+    """
+    if request.method == "POST":
+        clave = request.POST.get("clave")
+        valor = request.POST.get("valor")
+        descripcion = request.POST.get("descripcion", "")
+        accion = request.POST.get("accion")
+        
+        if accion == "crear" and clave and valor:
+            config, created = SystemConfig.objects.get_or_create(
+                clave=clave,
+                defaults={"valor": valor, "descripcion": descripcion}
+            )
+            if not created:
+                config.valor = valor
+                config.descripcion = descripcion
+                config.save()
+            messages.success(request, f"Configuración '{clave}' guardada.")
+        elif accion == "eliminar":
+            config_id = request.POST.get("config_id")
+            SystemConfig.objects.filter(id=config_id).delete()
+            messages.success(request, "Configuración eliminada.")
+        
+        return redirect("admin_system_config")
+    
+    configs = SystemConfig.objects.all().order_by("clave")
+    
+    return render(request, "fit/admin_system_config.html", {
+        "configs": configs,
+    })

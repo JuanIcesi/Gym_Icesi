@@ -150,9 +150,12 @@
 <div class="card" style="background:linear-gradient(135deg, #0b74de 0%, #4a7c59 100%);color:white;margin-bottom:1.5rem;">
   <h3 style="color:white;margin-bottom:1rem;">⚙️ Acciones de Administración</h3>
   <div style="display:flex;gap:1rem;flex-wrap:wrap;">
-    <a href="{% url 'admin_assign_trainer' %}" class="btn" style="background:white;color:#0b74de;font-weight:500;">👥 Asignar Entrenadores</a>
-    <a href="{% url 'trainers_list' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">🏋️ Ver Entrenadores</a>
-    <a href="/admin/" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">⚙️ Panel Django Admin</a>
+    <a href="{% url 'admin_users_management' %}" class="btn" style="background:white;color:#0b74de;font-weight:500;">👥 Gestión de Usuarios</a>
+    <a href="{% url 'admin_assign_trainer_advanced' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">👥 Asignación Avanzada</a>
+    <a href="{% url 'admin_content_moderation' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">🛡️ Moderación</a>
+    <a href="{% url 'admin_analytics' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">📊 Analytics</a>
+    <a href="{% url 'admin_system_config' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">⚙️ Configuración</a>
+    <a href="/admin/" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">🔧 Django Admin</a>
   </div>
 </div>
 {% endblock %}

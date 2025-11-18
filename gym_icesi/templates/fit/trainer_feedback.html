@@ -21,9 +21,17 @@
         {% endif %}
       </div>
     </div>
-    <a href="{% url 'trainer_recommendation_create' tuser.pk %}" class="btn btn-success">
-      💬 Enviar Recomendación
-    </a>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+      <a href="{% url 'trainer_progress_analysis' tuser.pk %}" class="btn btn-primary">
+        📊 Análisis Detallado
+      </a>
+      <a href="{% url 'trainer_recommendation_advanced' tuser.pk %}" class="btn" style="background:#10b981;color:white;">
+        💬 Recomendación Avanzada
+      </a>
+      <a href="{% url 'trainer_recommendation_create' tuser.pk %}" class="btn btn-success">
+        💬 Recomendación Simple
+      </a>
+    </div>
   </div>
 
   <!-- Resumen -->

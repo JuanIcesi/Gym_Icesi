@@ -2,80 +2,861 @@
 {% load static %}
 {% block title %}Iniciar Sesión - Gym Icesi{% endblock %}
 
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* Reset y configuración base */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* Ocultar completamente el header y footer del base.html */
+  body > header,
+  body > footer,
+  .site-header,
+  .site-footer {
+    display: none !important;
+  }
+
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    background: #0a0e27;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Contenedor principal con fondo espectacular */
+  .auth-hero {
+    min-height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    padding: 2rem;
+    background: linear-gradient(135deg, #0b74de 0%, #1a4d7a 20%, #2d5a87 40%, #3a6b9a 60%, #4a7c59 80%, #5a8d6a 100%);
+    background-size: 600% 600%;
+    animation: gradientFlow 25s ease infinite;
+  }
+
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    25% { background-position: 50% 0%; }
+    50% { background-position: 100% 50%; }
+    75% { background-position: 50% 100%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Partículas animadas de fondo - Ampliadas */
+  .auth-hero::before {
+    content: '';
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    top: -25%;
+    left: -25%;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(255,255,255,0.2) 0%, transparent 50%),
+      radial-gradient(circle at 90% 80%, rgba(255,255,255,0.15) 0%, transparent 55%),
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 65%),
+      radial-gradient(circle at 25% 75%, rgba(74, 124, 89, 0.25) 0%, transparent 45%),
+      radial-gradient(circle at 75% 25%, rgba(11, 116, 222, 0.2) 0%, transparent 50%),
+      radial-gradient(circle at 40% 60%, rgba(255,255,255,0.08) 0%, transparent 60%),
+      radial-gradient(circle at 60% 40%, rgba(74, 124, 89, 0.15) 0%, transparent 55%);
+    animation: particleFloat 30s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  @keyframes particleFloat {
+    0%, 100% { 
+      transform: translateY(0px) translateX(0px) rotate(0deg) scale(1);
+      opacity: 0.9;
+    }
+    25% { 
+      transform: translateY(-40px) translateX(30px) rotate(90deg) scale(1.1);
+      opacity: 1;
+    }
+    50% { 
+      transform: translateY(30px) translateX(-40px) rotate(180deg) scale(0.95);
+      opacity: 0.7;
+    }
+    75% { 
+      transform: translateY(-20px) translateX(50px) rotate(270deg) scale(1.05);
+      opacity: 0.85;
+    }
+  }
+
+  /* Efecto de ondas en el fondo - Ampliado */
+  .auth-hero::after {
+    content: '';
+    position: absolute;
+    width: 300%;
+    height: 300%;
+    top: -100%;
+    left: -100%;
+    background: 
+      radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px),
+      radial-gradient(circle, rgba(11, 116, 222, 0.02) 1px, transparent 1px);
+    background-size: 80px 80px, 120px 120px;
+    animation: waveMove 40s linear infinite;
+    z-index: 0;
+  }
+
+  @keyframes waveMove {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    50% { transform: translate(100px, 100px) rotate(180deg) scale(1.2); }
+    100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+  }
+
+  /* Contenedor del formulario */
+  .auth-form {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 500px;
+    animation: slideInScale 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes slideInScale {
+    0% {
+      opacity: 0;
+      transform: translateY(50px) scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Card del formulario con glassmorphism mejorado */
+  .auth-form .card {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border-radius: 32px;
+    padding: 3.5rem 3rem;
+    box-shadow: 
+      0 25px 80px rgba(0,0,0,0.4),
+      0 0 0 1px rgba(255,255,255,0.2) inset,
+      0 1px 0 rgba(255,255,255,0.5) inset;
+    border: 1px solid rgba(255,255,255,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Efecto de brillo animado en el borde */
+  .auth-form .card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #0b74de, #4a7c59, #0b74de, #4a7c59);
+    background-size: 400% 400%;
+    border-radius: 32px;
+    z-index: -1;
+    animation: borderGlow 3s ease infinite;
+    opacity: 0.5;
+  }
+
+  @keyframes borderGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Header del formulario */
+  .auth-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+  }
+
+  /* Botón de volver */
+  .btn-back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 48px;
+    height: 48px;
+    background: rgba(11, 116, 222, 0.1);
+    border: 2px solid rgba(11, 116, 222, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #0b74de;
+    font-size: 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+
+  .btn-back:hover {
+    background: rgba(11, 116, 222, 0.2);
+    border-color: rgba(11, 116, 222, 0.4);
+    transform: translateX(-3px);
+    box-shadow: 0 4px 12px rgba(11, 116, 222, 0.3);
+  }
+
+  .btn-back:active {
+    transform: translateX(-1px);
+  }
+
+  /* Logo con efecto 3D */
+  .auth-logo {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 2rem;
+    background: linear-gradient(135deg, #0b74de 0%, #3b82f6 50%, #4a7c59 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    box-shadow: 
+      0 15px 40px rgba(11, 116, 222, 0.4),
+      0 0 0 4px rgba(255,255,255,0.2),
+      inset 0 2px 10px rgba(255,255,255,0.3);
+    animation: logoFloat 3s ease-in-out infinite;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .auth-logo:hover {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 
+      0 20px 50px rgba(11, 116, 222, 0.5),
+      0 0 0 6px rgba(255,255,255,0.3);
+  }
+
+  @keyframes logoFloat {
+    0%, 100% { 
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% { 
+      transform: translateY(-10px) rotate(5deg);
+    }
+  }
+
+  /* Efecto de partículas alrededor del logo */
+  .auth-logo::after {
+    content: '';
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(11, 116, 222, 0.2) 0%, transparent 70%);
+    animation: pulseRing 2s ease-out infinite;
+  }
+
+  @keyframes pulseRing {
+    0% {
+      transform: scale(0.8);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.3);
+      opacity: 0;
+    }
+  }
+
+  .auth-form h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, #0b74de 0%, #3b82f6 50%, #4a7c59 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+
+  .auth-subtitle {
+    color: #64748b;
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .auth-description {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+
+  /* Mensajes de error mejorados */
+  .error-message {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+    padding: 1.5rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    border-left: 5px solid #ef4444;
+    box-shadow: 
+      0 8px 20px rgba(239, 68, 68, 0.2),
+      inset 0 1px 0 rgba(255,255,255,0.5);
+    animation: errorShake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .error-message::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  @keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+    20%, 40%, 60%, 80% { transform: translateX(8px); }
+  }
+
+  .error-message strong {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.05rem;
+    margin-bottom: 0.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .error-message p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Formulario */
+  .auth-form form {
+    margin-top: 2.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 2rem;
+    position: relative;
+  }
+
+  .auth-form label {
+    display: block;
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.875rem;
+    letter-spacing: 0.3px;
+    transition: all 0.3s ease;
+  }
+
+  .form-group:focus-within label {
+    color: #0b74de;
+    transform: translateX(5px);
+  }
+
+  .auth-form input[type="text"],
+  .auth-form input[type="password"] {
+    width: 100%;
+    padding: 1.25rem 1.5rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 1.05rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #ffffff;
+    color: #1e293b;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .auth-form input[type="text"]:focus,
+  .auth-form input[type="password"]:focus {
+    outline: none;
+    border-color: #0b74de;
+    box-shadow: 
+      0 0 0 5px rgba(11, 116, 222, 0.15),
+      0 8px 20px rgba(11, 116, 222, 0.2);
+    transform: translateY(-2px);
+    background: #fafbfc;
+  }
+
+  .auth-form input[type="text"]::placeholder,
+  .auth-form input[type="password"]::placeholder {
+    color: #cbd5e1;
+    font-weight: 400;
+  }
+
+  /* Icono dentro del input */
+  .form-group::after {
+    content: '';
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+
+  .form-group:focus-within::after {
+    opacity: 1;
+  }
+
+  /* Botón de submit mejorado */
+  .btn-submit {
+    width: 100%;
+    padding: 1.4rem 2rem;
+    background: linear-gradient(135deg, #0b74de 0%, #3b82f6 50%, #4a7c59 100%);
+    background-size: 200% 200%;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+      0 8px 25px rgba(11,116,222,0.4),
+      0 0 0 0 rgba(11,116,222,0.5);
+    margin-top: 2rem;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.5px;
+    animation: buttonGradient 3s ease infinite;
+  }
+
+  @keyframes buttonGradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .btn-submit::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.8s, height 0.8s;
+  }
+
+  .btn-submit:hover::before {
+    width: 400px;
+    height: 400px;
+  }
+
+  .btn-submit:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 
+      0 12px 35px rgba(11,116,222,0.5),
+      0 0 0 4px rgba(11,116,222,0.2);
+    animation: none;
+    background-position: 100% 50%;
+  }
+
+  .btn-submit:active {
+    transform: translateY(-2px) scale(1);
+  }
+
+  .btn-submit span {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Footer del formulario mejorado */
+  .auth-footer {
+    text-align: center;
+    margin-top: 3rem;
+    padding-top: 2.5rem;
+    border-top: 2px solid #e2e8f0;
+    position: relative;
+  }
+
+  .auth-footer::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #0b74de, #4a7c59);
+    border-radius: 0 0 3px 3px;
+  }
+
+  .support-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #0b74de;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: rgba(11, 116, 222, 0.05);
+    border: 2px solid transparent;
+    margin-bottom: 1.5rem;
+  }
+
+  .support-link:hover {
+    color: #3b82f6;
+    background: rgba(11, 116, 222, 0.1);
+    border-color: rgba(11, 116, 222, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11,116,222,0.2);
+  }
+
+  .support-link:active {
+    transform: translateY(0);
+  }
+
+  .auth-footer .brand-info {
+    margin-top: 1.5rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    font-weight: 500;
+  }
+
+  .auth-footer .brand-info strong {
+    color: #64748b;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  /* Errores de campo */
+  .field-error {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    border-left: 4px solid #ef4444;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Modal de soporte mejorado */
+  .support-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .support-modal.active {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .support-modal-content {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 24px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+    animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+
+  @keyframes modalSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(50px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .support-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #f1f5f9;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #64748b;
+    transition: all 0.3s ease;
+  }
+
+  .support-modal-close:hover {
+    background: #e2e8f0;
+    transform: rotate(90deg);
+  }
+
+  /* Capas adicionales de fondo para más profundidad */
+  .auth-hero {
+    background-attachment: fixed;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .auth-hero {
+      padding: 1rem;
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .auth-form .card {
+      padding: 2.5rem 2rem;
+      border-radius: 24px;
+    }
+
+    .auth-form h2 {
+      font-size: 2rem;
+    }
+
+    .auth-logo {
+      width: 85px;
+      height: 85px;
+      font-size: 3rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .auth-form .card {
+      padding: 2rem 1.5rem;
+    }
+
+    .auth-form h2 {
+      font-size: 1.75rem;
+    }
+
+    .auth-logo {
+      width: 75px;
+      height: 75px;
+      font-size: 2.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="auth-hero">
-	<div class="auth-visual" style="background-image: url('{% static 'img/login-hero.jpg' %}');" aria-hidden="true"></div>
-	<div class="auth-form">
-		<div class="card">
-			<div style="text-align:center;margin-bottom:1.5rem;">
-				<div style="font-size:3.5rem;margin-bottom:0.5rem;">💪</div>
-				<h2 style="margin-bottom:0.25rem;">Gym Icesi</h2>
-				<p style="color:#6b7280;font-size:0.95rem;margin:0;">Acceso Institucional</p>
-				<p class="muted" style="margin-top:0.5rem;font-size:0.85rem;">Ingresa con tu cuenta institucional de la Universidad Icesi</p>
-			</div>
+  <div class="auth-form">
+    <div class="card">
+      <div class="auth-header">
+        <a href="{% url 'index' %}" class="btn-back" title="Volver a la página principal">
+          <span>←</span>
+        </a>
+        <div class="auth-logo">💪</div>
+        <h2>Gym Icesi</h2>
+        <p class="auth-subtitle">Acceso Institucional - {{ role_name|default:"Usuario Estándar" }}</p>
+        <p class="auth-description">
+          Ingresa con tu cuenta institucional de la Universidad Icesi
+        </p>
+      </div>
 
-			{% if form.errors %}
-				<div style="background:#fee2e2;color:#991b1b;padding:1rem;border-radius:8px;margin-bottom:1rem;border-left:4px solid #ef4444;">
-					<strong>⚠️ Error de autenticación</strong>
-					<p style="margin:0.5rem 0 0 0;font-size:0.9rem;">
-						{% if form.non_field_errors %}
-							{{ form.non_field_errors|first }}
-						{% else %}
-							El usuario o la contraseña son incorrectos. Por favor, verifica tus credenciales e intenta nuevamente.
-						{% endif %}
-					</p>
-				</div>
-			{% endif %}
-			
-			{% if messages %}
-				{% for message in messages %}
-					{% if 'login_error' in message.tags %}
-						<div style="background:#fee2e2;color:#991b1b;padding:1rem;border-radius:8px;margin-bottom:1rem;border-left:4px solid #ef4444;">
-							<strong>⚠️ Error de autenticación</strong>
-							<p style="margin:0.5rem 0 0 0;font-size:0.9rem;">
-								{{ message }}
-							</p>
-						</div>
-					{% endif %}
-				{% endfor %}
-			{% endif %}
+      {% if form.errors %}
+        <div class="error-message">
+          <strong>
+            <span>⚠️</span>
+            Error de autenticación
+          </strong>
+          <p>
+            {% if form.non_field_errors %}
+              {{ form.non_field_errors|first }}
+            {% else %}
+              El usuario o la contraseña son incorrectos. Por favor, verifica tus credenciales e intenta nuevamente.
+            {% endif %}
+          </p>
+        </div>
+      {% endif %}
+      
+      {% if messages %}
+        {% for message in messages %}
+          {% if 'login_error' in message.tags %}
+            <div class="error-message">
+              <strong>
+                <span>⚠️</span>
+                Error de autenticación
+              </strong>
+              <p>{{ message }}</p>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
 
-			<form method="post">
-				{% csrf_token %}
+      <form method="post">
+        {% csrf_token %}
+        {% if expected_role %}
+          <input type="hidden" name="expected_role" value="{{ expected_role }}">
+        {% endif %}
 
-				<label for="id_username">Usuario Institucional</label>
-				{{ form.username }}
-				{% if form.username.errors %}
-					<div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
-						{{ form.username.errors }}
-					</div>
-				{% endif %}
+        <div class="form-group">
+          <label for="id_username">Usuario Institucional</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            <div class="field-error">
+              {{ form.username.errors }}
+            </div>
+          {% endif %}
+        </div>
 
-				<label for="id_password">Contraseña</label>
-				{{ form.password }}
-				{% if form.password.errors %}
-					<div style="background:#fee2e2;color:#991b1b;padding:0.5rem;border-radius:6px;margin-top:0.25rem;font-size:0.9rem;">
-						{{ form.password.errors }}
-					</div>
-				{% endif %}
+        <div class="form-group">
+          <label for="id_password">Contraseña</label>
+          {{ form.password }}
+          {% if form.password.errors %}
+            <div class="field-error">
+              {{ form.password.errors }}
+            </div>
+          {% endif %}
+        </div>
 
-				<button type="submit" class="btn" style="width:100%;margin-top:1.5rem;">
-					Iniciar Sesión
-				</button>
-			</form>
+        <button type="submit" class="btn-submit">
+          <span>Iniciar Sesión →</span>
+        </button>
+      </form>
 
-			<div style="text-align:center;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb;">
-				<p class="muted" style="font-size:0.85rem;margin:0.5rem 0;">
-					<a href="#" style="color:#6b7280;text-decoration:none;" onclick="alert('Contacta a Soporte Icesi: soporte@icesi.edu.co'); return false;">
-						¿Problemas con tu cuenta? Contacta Soporte Icesi
-					</a>
-				</p>
-				<p class="muted" style="font-size:0.8rem;margin:0.5rem 0 0 0;color:#9ca3af;">
-					<strong>Gym Icesi</strong> - Bienestar Universitario<br>
-					Universidad Icesi
-				</p>
-			</div>
-		</div>
-	</div>
+      <div class="auth-footer">
+        <a href="#" class="support-link" onclick="openSupportModal(); return false;">
+          <span>🔒</span>
+          <span>¿Problemas con tu cuenta? Contacta Soporte Icesi</span>
+        </a>
+        <div class="brand-info">
+          <strong>Gym Icesi</strong> - Bienestar Universitario<br>
+          Universidad Icesi
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Modal de Soporte -->
+<div class="support-modal" id="supportModal" onclick="closeSupportModal(event)">
+  <div class="support-modal-content" onclick="event.stopPropagation()">
+    <button class="support-modal-close" onclick="closeSupportModal(event)">×</button>
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">🆘</div>
+      <h2 style="color: #1e293b; margin-bottom: 0.5rem; font-size: 1.75rem;">Soporte Icesi</h2>
+      <p style="color: #64748b; font-size: 0.95rem;">Estamos aquí para ayudarte</p>
+    </div>
+    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+      <h3 style="color: #1e293b; margin-bottom: 1rem; font-size: 1.1rem;">📧 Contacto</h3>
+      <p style="color: #475569; margin-bottom: 0.5rem; font-size: 0.95rem;">
+        <strong>Email:</strong> 
+        <a href="mailto:soporte@icesi.edu.co" style="color: #0b74de; text-decoration: none;">
+          soporte@icesi.edu.co
+        </a>
+      </p>
+      <p style="color: #475569; margin-bottom: 0.5rem; font-size: 0.95rem;">
+        <strong>Teléfono:</strong> 
+        <a href="tel:+5725551234" style="color: #0b74de; text-decoration: none;">
+          +57 (2) 555-1234
+        </a>
+      </p>
+      <p style="color: #475569; font-size: 0.95rem;">
+        <strong>Horario:</strong> Lunes a Viernes, 8:00 AM - 6:00 PM
+      </p>
+    </div>
+    <div style="background: #eff6ff; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #0b74de;">
+      <h3 style="color: #1e293b; margin-bottom: 0.75rem; font-size: 1.1rem;">💡 ¿Necesitas ayuda?</h3>
+      <ul style="color: #475569; font-size: 0.9rem; line-height: 1.8; padding-left: 1.5rem;">
+        <li>Verifica que estés usando tu usuario institucional correcto</li>
+        <li>Asegúrate de que tu contraseña sea la correcta</li>
+        <li>Si olvidaste tu contraseña, contacta a Soporte Icesi</li>
+        <li>El sistema identifica automáticamente tu rol al iniciar sesión</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openSupportModal() {
+    document.getElementById('supportModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSupportModal(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    document.getElementById('supportModal').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // Cerrar modal con ESC
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeSupportModal();
+    }
+  });
+</script>
 {% endblock %}
