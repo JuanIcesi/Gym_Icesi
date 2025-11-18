@@ -287,9 +287,13 @@ def trainer_dashboard(request):
     usuarios_necesitan_atencion = usuarios_necesitan_atencion[:5]  # Top 5
     
     # Sesiones registradas por tus usuarios este mes
+    # Obtener IDs de usuarios asignados activos
+    usuarios_asignados_ids = TrainerAssignment.objects.filter(
+        trainer=user, activo=True
+    ).values_list('user_id', flat=True)
+    
     sesiones_usuarios_mes = ProgressLog.objects.filter(
-        routine__user__trainerassignment__trainer=user,
-        routine__user__trainerassignment__activo=True,
+        user_id__in=usuarios_asignados_ids,
         fecha__year=hoy.year,
         fecha__month=hoy.month
     ).count()
