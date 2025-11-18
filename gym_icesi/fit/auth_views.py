@@ -93,11 +93,11 @@ class CustomLoginView(LoginView):
                     return False, "Este login es solo para estudiantes y colaboradores. Si eres entrenador o administrador, usa el login correspondiente."
                 
                 elif expected_role == 'trainer':
-                    # Entrenador: cualquier empleado (EMPLOYEE) puede ser entrenador
+                    # Entrenador: solo empleados con employee_type = 'Instructor'
                     if role != 'EMPLOYEE' or not employee_id:
                         return False, "Este login es solo para entrenadores (empleados). Si eres estudiante, usa el login de Usuario Estándar."
                     
-                    # Verificar que el empleado exista
+                    # Verificar que el empleado exista y sea Instructor
                     cursor.execute("""
                         SELECT employee_type 
                         FROM employees 
@@ -108,8 +108,11 @@ class CustomLoginView(LoginView):
                     if not emp_row:
                         return False, "Empleado no encontrado en la base de datos."
                     
-                    # Cualquier empleado puede ser entrenador
-                    return True, None
+                    emp_type = (emp_row[0] or "").upper()
+                    if emp_type == 'INSTRUCTOR':
+                        return True, None
+                    else:
+                        return False, "Este login es solo para entrenadores (Instructores). Si eres docente o colaborador, usa el login de Usuario Estándar."
                 
                 elif expected_role == 'admin':
                     # Administrador: solo empleados con role='ADMIN' o employee_type='Administrativo' con permisos especiales

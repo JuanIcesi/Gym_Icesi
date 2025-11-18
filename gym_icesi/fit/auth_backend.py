@@ -8,16 +8,17 @@ def _role_flags(role: str, employee_id: str = None):
     """
     Determina los flags de usuario según su rol.
     - ADMIN: is_superuser=True, is_staff=True
-    - EMPLOYEE con employee_type='Instructor': is_staff=True (entrenador)
-    - EMPLOYEE sin employee_type='Instructor': is_staff=False (usuario estándar)
-    - STUDENT: is_staff=False (usuario estándar)
+    - EMPLOYEE con employee_type='Administrativo': is_superuser=True, is_staff=True (administrador)
+    - EMPLOYEE con employee_type='Instructor': is_staff=True, is_superuser=False (entrenador)
+    - EMPLOYEE con employee_type='Docente': is_staff=False, is_superuser=False (usuario estándar)
+    - STUDENT: is_staff=False, is_superuser=False (usuario estándar)
     """
     role = (role or "").upper()
     if role == "ADMIN":
         return dict(is_staff=True, is_superuser=True)
     
     if role == "EMPLOYEE" and employee_id:
-        # Verificar si es Instructor (entrenador)
+        # Verificar el tipo de empleado
         try:
             with connection.cursor() as cur:
                 cur.execute(
@@ -25,13 +26,18 @@ def _role_flags(role: str, employee_id: str = None):
                     [employee_id]
                 )
                 row = cur.fetchone()
-                if row and row[0] and row[0].upper() == "INSTRUCTOR":
-                    return dict(is_staff=True, is_superuser=False)  # Es entrenador
+                if row and row[0]:
+                    emp_type = (row[0] or "").upper()
+                    if emp_type == "ADMINISTRATIVO":
+                        return dict(is_staff=True, is_superuser=True)  # Es administrador
+                    elif emp_type == "INSTRUCTOR":
+                        return dict(is_staff=True, is_superuser=False)  # Es entrenador
+                    # Docente u otro: usuario estándar
         except Exception:
-            # Si hay error, asumir que no es entrenador
+            # Si hay error, asumir que no es entrenador ni admin
             pass
     
-    # Por defecto: usuario estándar (STUDENT o EMPLOYEE no-instructor)
+    # Por defecto: usuario estándar (STUDENT o EMPLOYEE no-instructor/no-administrativo)
     return dict(is_staff=False, is_superuser=False)
 
 class InstitutionalBackend(BaseBackend):
@@ -109,7 +115,7 @@ class InstitutionalBackend(BaseBackend):
                     except Exception:
                         pass
             elif expected_role == 'trainer':
-                # Cualquier empleado (EMPLOYEE) puede ser entrenador
+                # Solo empleados con employee_type = 'Instructor' pueden ser entrenadores
                 if role == 'EMPLOYEE' and iu.employee_id:
                     try:
                         with connection.cursor() as cur:
@@ -118,8 +124,8 @@ class InstitutionalBackend(BaseBackend):
                                 [iu.employee_id]
                             )
                             row = cur.fetchone()
-                            # Cualquier empleado puede ser entrenador
-                            if row:
+                            # Solo Instructor puede ser entrenador
+                            if row and row[0] and row[0].upper() == "INSTRUCTOR":
                                 role_valid = True
                     except Exception:
                         pass
@@ -153,12 +159,8 @@ class InstitutionalBackend(BaseBackend):
                 user.set_unusable_password()
             
             # Aplicar flags según el rol
-            if flags.get("is_superuser"):
-                user.is_superuser = True
-                user.is_staff = True
-            else:
-                user.is_superuser = False
-                user.is_staff = flags.get("is_staff", False)
+            user.is_superuser = flags.get("is_superuser", False)
+            user.is_staff = flags.get("is_staff", False)
 
             user.email = user.email or f"{iu.username}@icesi.edu.co"
             user.is_active = True

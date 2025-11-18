@@ -13,7 +13,7 @@ def nav_trainers(request):
                 cur.execute("""
                     SELECT e.id, e.first_name, e.last_name
                     FROM employees e
-                    WHERE UPPER(e.employee_type) IN ('TRAINER', 'ENTRENADOR')
+                    WHERE UPPER(e.employee_type) = 'INSTRUCTOR'
                     ORDER BY e.last_name
                     LIMIT 10
                 """)

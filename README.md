@@ -169,15 +169,32 @@ Esto creará 3 usuarios de prueba:
 
 ### Para Neon (PostgreSQL):
 
+**Opción Rápida (Recomendada):**
+```bash
+# 1. Configura las variables DB_* en .env con tus credenciales de Neon
+# 2. Ejecuta el comando automático:
+python manage.py setup_database
+```
+
+Este comando hace todo automáticamente:
+- ✅ Verifica la conexión
+- ✅ Aplica migraciones (crea esquema de la aplicación)
+- ✅ Verifica tablas
+- ✅ Crea datos de prueba
+
+**Opción Manual:**
 1. Crea un proyecto en [Neon](https://neon.tech)
 2. Ejecuta en la consola SQL de Neon (en este orden):
-   - `university_schema_postgresql.sql` (esquema - CREATE TABLE)
-   - `university_full_data_postgresql.sql` (datos - INSERT, incluye usuarios)
-3. Configura las variables `DB_*` en `.env` con tus credenciales de Neon
-4. Ejecuta: `python manage.py migrate`
-5. Verifica: `python manage.py verify_database_connection`
+   - `university_schema_postgresql.sql` (esquema institucional)
+   - `university_full_data_postgresql.sql` (datos institucionales)
+   - `create_app_user.sql` (opcional: usuario dedicado)
+3. Configura las variables `DB_*` en `.env` con tus credenciales
+4. Ejecuta: `python manage.py migrate` (crea esquema de la aplicación)
+5. Ejecuta: `python manage.py setup_database` (crea datos de prueba)
+6. Verifica: `python manage.py verify_database_connection`
 
-**📖 Ver `GUIA_NEON_PASO_A_PASO.md` para instrucciones detalladas paso a paso.**
+**📖 Ver `CONFIGURACION_BD_RELACIONAL.md` para guía completa paso a paso.**
+**📖 Ver `GUIA_NEON_PASO_A_PASO.md` para instrucciones específicas de Neon.**
 
 ### Para MongoDB Atlas:
 

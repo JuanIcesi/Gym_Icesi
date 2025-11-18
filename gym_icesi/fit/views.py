@@ -122,9 +122,24 @@ def home(request):
     if user.is_superuser:
         return admin_dashboard(request)
     
-    # Si es entrenador, mostrar dashboard de entrenador
-    if user.is_staff:
-        return trainer_dashboard(request)
+    # Si es entrenador (solo Instructores), mostrar dashboard de entrenador
+    # Verificar que realmente sea Instructor, no solo is_staff
+    if user.is_staff and not user.is_superuser:
+        # Verificar que sea Instructor
+        from fit.institutional_models import InstitutionalUser
+        try:
+            iu = InstitutionalUser.objects.get(username=user.username)
+            if iu.role == 'EMPLOYEE' and iu.employee_id:
+                with connection.cursor() as cur:
+                    cur.execute(
+                        "SELECT employee_type FROM employees WHERE id = %s",
+                        [iu.employee_id]
+                    )
+                    row = cur.fetchone()
+                    if row and row[0] and row[0].upper() == "INSTRUCTOR":
+                        return trainer_dashboard(request)
+        except Exception:
+            pass
     
     # Dashboard de usuario estándar
     latest = ProgressLog.objects.filter(user=user).order_by("-fecha")[:5]
@@ -333,7 +348,19 @@ def admin_dashboard(request):
     
     # Estadísticas globales
     total_usuarios = User.objects.filter(is_staff=False, is_superuser=False).count()
-    total_entrenadores = User.objects.filter(is_staff=True, is_superuser=False).count()
+    # Contar solo Instructores (entrenadores reales)
+    total_entrenadores = 0
+    try:
+        with connection.cursor() as cur:
+            cur.execute("""
+                SELECT COUNT(*) FROM employees 
+                WHERE UPPER(employee_type) = 'INSTRUCTOR'
+            """)
+            row = cur.fetchone()
+            if row:
+                total_entrenadores = row[0]
+    except Exception:
+        pass
     total_rutinas = Routine.objects.count()
     total_sesiones = ProgressLog.objects.count()
     
@@ -826,7 +853,30 @@ def trainer_detail(request, emp_id: str):
 
 # ------------------------------- Módulo trainer ------------------------------
 def is_trainer(u):
-    return u.is_staff
+    """
+    Verifica si un usuario es entrenador.
+    Solo los empleados con employee_type = 'Instructor' son entrenadores.
+    """
+    if not u.is_staff or u.is_superuser:
+        return False
+    
+    # Verificar que realmente sea Instructor en la BD institucional
+    from fit.institutional_models import InstitutionalUser
+    try:
+        iu = InstitutionalUser.objects.get(username=u.username)
+        if iu.role == 'EMPLOYEE' and iu.employee_id:
+            with connection.cursor() as cur:
+                cur.execute(
+                    "SELECT employee_type FROM employees WHERE id = %s",
+                    [iu.employee_id]
+                )
+                row = cur.fetchone()
+                if row and row[0] and row[0].upper() == "INSTRUCTOR":
+                    return True
+    except Exception:
+        pass
+    
+    return False
 
 
 def is_admin(user):
@@ -1044,8 +1094,7 @@ def trainers_list(request):
 def trainers_view(request):
     """
     Vista para cualquier usuario logueado:
-    muestra TODOS los empleados que pueden ser entrenadores.
-    Según los requerimientos, todos los empleados pueden ser entrenadores.
+    muestra SOLO los empleados con employee_type = 'Instructor' (entrenadores).
     """
     trainers = []
     try:
@@ -1059,7 +1108,7 @@ def trainers_view(request):
                        e.employee_type
                 FROM employees e
                 JOIN faculties f ON e.faculty_code = f.code
-                WHERE e.employee_type IN ('Instructor', 'Docente', 'Administrativo')
+                WHERE UPPER(e.employee_type) = 'INSTRUCTOR'
                 ORDER BY e.last_name, e.first_name;
             """)
             for (emp_id, fn, ln, email, faculty, emp_type) in cur.fetchall():
@@ -1463,28 +1512,96 @@ def admin_assign_trainer(request):
     search_user = request.GET.get("search_user", "")
     search_trainer = request.GET.get("search_trainer", "")
     
-    users_query = User.objects.filter(is_staff=False, is_superuser=False)
-    if search_user:
-        users_query = users_query.filter(username__icontains=search_user)
-    users = users_query.order_by("username")[:50]
-    
-    # Agregar información institucional a usuarios
-    users_with_info = []
-    for user in users:
-        user_info = get_institutional_info(user.username)
-        # Obtener asignación actual
-        current_assignment = TrainerAssignment.objects.filter(
-            user=user, activo=True
-        ).select_related("trainer").first()
+    # Obtener usuarios directamente de la BD institucional
+    # Incluir: Estudiantes (STUDENT) y Empleados que NO sean Instructores ni Administrativos (Docentes)
+    users_from_db = []
+    try:
+        with connection.cursor() as cur:
+            cur.execute("""
+                SELECT u.username, u.role, u.student_id, u.employee_id
+                FROM users u
+                WHERE u.is_active = TRUE
+                AND u.username NOT LIKE 'test%'
+                AND (
+                    u.role = 'STUDENT'
+                    OR (
+                        u.role = 'EMPLOYEE' 
+                        AND u.employee_id IS NOT NULL
+                        AND EXISTS (
+                            SELECT 1 FROM employees e 
+                            WHERE e.id = u.employee_id 
+                            AND UPPER(e.employee_type) NOT IN ('INSTRUCTOR', 'ADMINISTRATIVO')
+                        )
+                    )
+                )
+                ORDER BY u.username
+            """)
+            for row in cur.fetchall():
+                username, role, student_id, employee_id = row
+                
+                # Filtrar usuarios de prueba
+                if 'test' in username.lower():
+                    continue
+                
+                # Aplicar búsqueda si existe
+                if search_user and search_user.lower() not in username.lower():
+                    continue
+                
+                # Obtener o crear usuario Django si no existe
+                user, created = User.objects.get_or_create(
+                    username=username,
+                    defaults={'is_staff': False, 'is_superuser': False}
+                )
+                
+                # Asegurar que no sea staff ni superuser (son usuarios estándar)
+                if not created:
+                    if user.is_staff or user.is_superuser:
+                        # Verificar si realmente debería ser usuario estándar
+                        # (por si cambió su rol en la BD institucional)
+                        user.is_staff = False
+                        user.is_superuser = False
+                        user.save()
+                
+                # Obtener información institucional
+                user_info = get_institutional_info(username)
+                
+                # Obtener asignación actual
+                current_assignment = TrainerAssignment.objects.filter(
+                    user=user, activo=True
+                ).select_related("trainer").first()
+                
+                users_from_db.append({
+                    "user": user,
+                    "user_info": user_info,
+                    "current_assignment": current_assignment,
+                })
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error al obtener usuarios de BD institucional: {e}")
+        # Fallback: usar solo los que existen en Django
+        users_query = User.objects.filter(is_staff=False, is_superuser=False)
+        if search_user:
+            users_query = users_query.filter(username__icontains=search_user)
+        users = users_query.order_by("username")[:50]
         
-        users_with_info.append({
-            "user": user,
-            "user_info": user_info,
-            "current_assignment": current_assignment,
-        })
+        users_from_db = []
+        for user in users:
+            user_info = get_institutional_info(user.username)
+            current_assignment = TrainerAssignment.objects.filter(
+                user=user, activo=True
+            ).select_related("trainer").first()
+            
+            users_from_db.append({
+                "user": user,
+                "user_info": user_info,
+                "current_assignment": current_assignment,
+            })
+    
+    users_with_info = users_from_db
     
     # Obtener entrenadores directamente de la BD institucional
-    # Todos los empleados pueden ser entrenadores según los requerimientos
+    # Solo empleados con employee_type = 'Instructor' pueden ser entrenadores
     trainers_from_db = []
     try:
         with connection.cursor() as cur:
@@ -1493,6 +1610,7 @@ def admin_assign_trainer(request):
                 FROM users u
                 JOIN employees e ON u.employee_id = e.id
                 WHERE u.role = 'EMPLOYEE'
+                AND UPPER(e.employee_type) = 'INSTRUCTOR'
                 AND u.username NOT LIKE 'test%'
                 ORDER BY e.last_name, e.first_name
             """)
@@ -2413,9 +2531,6 @@ def admin_users_management(request):
     """
     Panel completo de gestión de usuarios con filtros avanzados.
     """
-    # Obtener todos los usuarios
-    users = User.objects.filter(is_superuser=False).order_by("username")
-    
     # Filtros
     search_query = request.GET.get("q", "")
     role_filter = request.GET.get("role", "")
@@ -2423,8 +2538,65 @@ def admin_users_management(request):
     campus_filter = request.GET.get("campus", "")
     activity_filter = request.GET.get("activity", "")
     
-    if search_query:
-        users = users.filter(username__icontains=search_query)
+    # Obtener usuarios directamente de la BD institucional
+    # Incluir: Estudiantes (STUDENT) y Empleados que NO sean Instructores ni Administrativos (Docentes)
+    users_from_db = []
+    try:
+        with connection.cursor() as cur:
+            cur.execute("""
+                SELECT u.username, u.role, u.student_id, u.employee_id
+                FROM users u
+                WHERE u.is_active = TRUE
+                AND u.username NOT LIKE 'test%'
+                AND (
+                    u.role = 'STUDENT'
+                    OR (
+                        u.role = 'EMPLOYEE' 
+                        AND u.employee_id IS NOT NULL
+                        AND EXISTS (
+                            SELECT 1 FROM employees e 
+                            WHERE e.id = u.employee_id 
+                            AND UPPER(e.employee_type) NOT IN ('INSTRUCTOR', 'ADMINISTRATIVO')
+                        )
+                    )
+                )
+                ORDER BY u.username
+            """)
+            for row in cur.fetchall():
+                username, role, student_id, employee_id = row
+                
+                # Filtrar usuarios de prueba
+                if 'test' in username.lower():
+                    continue
+                
+                # Aplicar búsqueda si existe
+                if search_query and search_query.lower() not in username.lower():
+                    continue
+                
+                # Obtener o crear usuario Django si no existe
+                user, created = User.objects.get_or_create(
+                    username=username,
+                    defaults={'is_staff': False, 'is_superuser': False}
+                )
+                
+                # Asegurar que no sea staff ni superuser (son usuarios estándar)
+                if not created:
+                    if user.is_staff or user.is_superuser:
+                        user.is_staff = False
+                        user.is_superuser = False
+                        user.save()
+                
+                users_from_db.append(user)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error al obtener usuarios de BD institucional: {e}")
+        # Fallback: usar solo los que existen en Django
+        users_from_db = list(User.objects.filter(is_superuser=False).order_by("username"))
+        if search_query:
+            users_from_db = [u for u in users_from_db if search_query.lower() in u.username.lower()]
+    
+    users = users_from_db
     
     # Agregar información institucional y filtrar
     users_with_info = []
@@ -2564,9 +2736,75 @@ def admin_assign_trainer_advanced(request):
                     
                     messages.success(request, f"Asignación desactivada.")
     
-    # Obtener usuarios y entrenadores
-    usuarios = User.objects.filter(is_staff=False, is_superuser=False).order_by("username")
-    entrenadores = User.objects.filter(is_staff=True, is_superuser=False).order_by("username")
+    # Obtener usuarios directamente de la BD institucional
+    # Incluir: Estudiantes (STUDENT) y Empleados que NO sean Instructores ni Administrativos (Docentes)
+    usuarios_from_db = []
+    try:
+        with connection.cursor() as cur:
+            cur.execute("""
+                SELECT u.username, u.role, u.student_id, u.employee_id
+                FROM users u
+                WHERE u.is_active = TRUE
+                AND u.username NOT LIKE 'test%'
+                AND (
+                    u.role = 'STUDENT'
+                    OR (
+                        u.role = 'EMPLOYEE' 
+                        AND u.employee_id IS NOT NULL
+                        AND EXISTS (
+                            SELECT 1 FROM employees e 
+                            WHERE e.id = u.employee_id 
+                            AND UPPER(e.employee_type) NOT IN ('INSTRUCTOR', 'ADMINISTRATIVO')
+                        )
+                    )
+                )
+                ORDER BY u.username
+            """)
+            for row in cur.fetchall():
+                username, role, student_id, employee_id = row
+                
+                # Filtrar usuarios de prueba
+                if 'test' in username.lower():
+                    continue
+                
+                # Obtener o crear usuario Django si no existe
+                user, created = User.objects.get_or_create(
+                    username=username,
+                    defaults={'is_staff': False, 'is_superuser': False}
+                )
+                
+                # Asegurar que no sea staff ni superuser (son usuarios estándar)
+                if not created:
+                    if user.is_staff or user.is_superuser:
+                        user.is_staff = False
+                        user.is_superuser = False
+                        user.save()
+                
+                usuarios_from_db.append(user)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error al obtener usuarios de BD institucional: {e}")
+        # Fallback: usar solo los que existen en Django
+        usuarios_from_db = list(User.objects.filter(is_staff=False, is_superuser=False).order_by("username"))
+    
+    usuarios = usuarios_from_db
+    # Obtener solo Instructores (entrenadores reales)
+    entrenadores = []
+    try:
+        with connection.cursor() as cur:
+            cur.execute("""
+                SELECT u.username
+                FROM users u
+                JOIN employees e ON u.employee_id = e.id
+                WHERE u.role = 'EMPLOYEE'
+                AND UPPER(e.employee_type) = 'INSTRUCTOR'
+                ORDER BY e.last_name, e.first_name
+            """)
+            trainer_usernames = [row[0] for row in cur.fetchall()]
+            entrenadores = User.objects.filter(username__in=trainer_usernames).order_by("username")
+    except Exception:
+        entrenadores = User.objects.none()
     
     # Agregar información de carga de trabajo para entrenadores
     entrenadores_con_carga = []
@@ -2729,7 +2967,20 @@ def admin_analytics(request):
     
     # Métricas generales del sistema
     total_usuarios = User.objects.filter(is_staff=False, is_superuser=False).count()
-    total_entrenadores = User.objects.filter(is_staff=True, is_superuser=False).count()
+    # Contar solo Instructores (entrenadores reales)
+    total_entrenadores = 0
+    try:
+        with connection.cursor() as cur:
+            cur.execute("""
+                SELECT COUNT(*) FROM employees 
+                WHERE UPPER(employee_type) = 'INSTRUCTOR'
+            """)
+            row = cur.fetchone()
+            if row:
+                total_entrenadores = row[0]
+    except Exception:
+        pass
+    
     total_rutinas = Routine.objects.count()
     total_ejercicios = Exercise.objects.count()
     total_sesiones = ProgressLog.objects.count()
@@ -2779,9 +3030,22 @@ def admin_analytics(request):
     except Exception:
         pass
     
-    # Efectividad de entrenadores
+    # Efectividad de entrenadores (solo Instructores)
     efectividad_entrenadores = []
-    entrenadores = User.objects.filter(is_staff=True, is_superuser=False)
+    # Obtener solo Instructores
+    try:
+        with connection.cursor() as cur:
+            cur.execute("""
+                SELECT u.username
+                FROM users u
+                JOIN employees e ON u.employee_id = e.id
+                WHERE u.role = 'EMPLOYEE'
+                AND UPPER(e.employee_type) = 'INSTRUCTOR'
+            """)
+            trainer_usernames = [row[0] for row in cur.fetchall()]
+            entrenadores = User.objects.filter(username__in=trainer_usernames)
+    except Exception:
+        entrenadores = User.objects.none()
     for trainer in entrenadores:
         asignados = TrainerAssignment.objects.filter(trainer=trainer, activo=True).count()
         if asignados > 0:

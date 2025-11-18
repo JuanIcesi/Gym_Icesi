@@ -117,11 +117,9 @@ INSERT INTO USERS (username, password_hash, role, student_id, employee_id, is_ac
 ('carlos.l', 'hash_cl123', 'EMPLOYEE', NULL, '1003', TRUE, CURRENT_TIMESTAMP),
 ('carlos.m', 'hash_cm123', 'EMPLOYEE', NULL, '1004', TRUE, CURRENT_TIMESTAMP),
 ('sandra.o', 'hash_so123', 'EMPLOYEE', NULL, '1005', TRUE, CURRENT_TIMESTAMP),
+('julian.r', 'hash_jr123', 'EMPLOYEE', NULL, '1006', TRUE, CURRENT_TIMESTAMP),
 ('paula.r', 'hash_pr123', 'EMPLOYEE', NULL, '1007', TRUE, CURRENT_TIMESTAMP),
 ('andres.c', 'hash_ac123', 'EMPLOYEE', NULL, '1008', TRUE, CURRENT_TIMESTAMP);
-
-
-
 
 -- Insert Foreign Key Constraints
 ALTER TABLE STUDENTS ADD CONSTRAINT STUDENTS_CITIES_FK 
