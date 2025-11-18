@@ -75,7 +75,7 @@
               <div style="display:flex;gap:1rem;flex-wrap:wrap;color:#6b7280;font-size:0.9rem;">
                 <span>📅 {{ log.fecha|date:"d M Y" }}</span>
                 {% if log.tiempo_seg %}
-                  <span>⏱️ {{ log.tiempo_seg }} segundos ({{ log.tiempo_seg|floatformat:0|add:0|div:60|floatformat:1 }} min)</span>
+                  <span>⏱️ {{ log.tiempo_seg }} segundos ({% widthratio log.tiempo_seg 60 1 %} min)</span>
                 {% endif %}
                 {% if log.repeticiones %}
                   <span>🔄 {{ log.repeticiones }} repeticiones</span>

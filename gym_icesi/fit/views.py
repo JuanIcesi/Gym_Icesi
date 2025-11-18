@@ -1040,7 +1040,8 @@ def trainers_list(request):
 def trainers_view(request):
     """
     Vista para cualquier usuario logueado:
-    muestra SOLO los empleados cuyo employee_type = 'INSTRUCTOR'.
+    muestra TODOS los empleados que pueden ser entrenadores.
+    Según los requerimientos, todos los empleados pueden ser entrenadores.
     """
     trainers = []
     try:
@@ -1050,21 +1051,26 @@ def trainers_view(request):
                        e.first_name,
                        e.last_name,
                        e.email,
-                       f.name AS faculty
+                       f.name AS faculty,
+                       e.employee_type
                 FROM employees e
                 JOIN faculties f ON e.faculty_code = f.code
-                WHERE UPPER(e.employee_type) = 'INSTRUCTOR'
+                WHERE e.employee_type IN ('Instructor', 'Docente', 'Administrativo')
                 ORDER BY e.last_name, e.first_name;
             """)
-            for (emp_id, fn, ln, email, faculty) in cur.fetchall():
+            for (emp_id, fn, ln, email, faculty, emp_type) in cur.fetchall():
                 trainers.append({
                     "id": emp_id,
                     "name": f"{fn} {ln}",
                     "email": email,
                     "faculty": faculty,
+                    "employee_type": emp_type,
                 })
-    except Exception:
+    except Exception as e:
         # Si falla (por ejemplo, usando SQLite sin BD institucional), mostrar lista vacía
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error al obtener entrenadores: {e}")
         pass
 
     return render(request, "fit/trainers.html", {"trainers": trainers})
@@ -1398,7 +1404,8 @@ def admin_assign_trainer(request):
         
         # Crear o actualizar asignación
         user = get_object_or_404(User, pk=user_id, is_staff=False, is_superuser=False)
-        trainer = get_object_or_404(User, pk=trainer_id, is_staff=True, is_superuser=False)
+        # El entrenador puede ser cualquier empleado de la BD institucional
+        trainer = get_object_or_404(User, pk=trainer_id)
 
         # Desactivar asignaciones anteriores del usuario
         TrainerAssignment.objects.filter(user=user, activo=True).update(activo=False)
@@ -1472,26 +1479,74 @@ def admin_assign_trainer(request):
             "current_assignment": current_assignment,
         })
     
-    # Búsqueda de entrenadores
-    trainers_query = User.objects.filter(is_staff=True, is_superuser=False)
-    if search_trainer:
-        trainers_query = trainers_query.filter(username__icontains=search_trainer)
-    trainers = trainers_query.order_by("username")
-    
-    # Agregar información institucional a entrenadores
-    trainers_with_info = []
-    for trainer in trainers:
-        trainer_info = get_institutional_info(trainer.username)
-        # Contar usuarios asignados
-        asignados_count = TrainerAssignment.objects.filter(
-            trainer=trainer, activo=True
-        ).count()
+    # Obtener entrenadores directamente de la BD institucional
+    # Todos los empleados pueden ser entrenadores según los requerimientos
+    trainers_from_db = []
+    try:
+        with connection.cursor() as cur:
+            cur.execute("""
+                SELECT u.username, u.employee_id, e.first_name, e.last_name, e.employee_type
+                FROM users u
+                JOIN employees e ON u.employee_id = e.id
+                WHERE u.role = 'EMPLOYEE'
+                AND u.username NOT LIKE 'test%'
+                ORDER BY e.last_name, e.first_name
+            """)
+            for row in cur.fetchall():
+                username, emp_id, first_name, last_name, emp_type = row
+                # Filtrar usuarios de prueba
+                if 'test' in username.lower():
+                    continue
+                if search_trainer and search_trainer.lower() not in username.lower():
+                    continue
+                
+                # Obtener o crear usuario Django si no existe
+                trainer_user, created = User.objects.get_or_create(
+                    username=username,
+                    defaults={'is_staff': True, 'is_superuser': False}
+                )
+                
+                # Si el usuario ya existía pero no tenía is_staff, actualizarlo
+                if not created and not trainer_user.is_staff:
+                    trainer_user.is_staff = True
+                    trainer_user.save()
+                
+                trainer_info = get_institutional_info(username)
+                # Contar usuarios asignados
+                asignados_count = TrainerAssignment.objects.filter(
+                    trainer=trainer_user, activo=True
+                ).count()
+                
+                trainers_from_db.append({
+                    "trainer": trainer_user,
+                    "trainer_info": trainer_info,
+                    "asignados_count": asignados_count,
+                })
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error al obtener entrenadores de BD institucional: {e}")
+        # Fallback: usar solo los que tienen is_staff=True
+        trainers_query = User.objects.filter(is_staff=True, is_superuser=False)
+        if search_trainer:
+            trainers_query = trainers_query.filter(username__icontains=search_trainer)
+        trainers = trainers_query.order_by("username")
         
-        trainers_with_info.append({
-            "trainer": trainer,
-            "trainer_info": trainer_info,
-            "asignados_count": asignados_count,
-        })
+        trainers_with_info = []
+        for trainer in trainers:
+            trainer_info = get_institutional_info(trainer.username)
+            asignados_count = TrainerAssignment.objects.filter(
+                trainer=trainer, activo=True
+            ).count()
+            
+            trainers_with_info.append({
+                "trainer": trainer,
+                "trainer_info": trainer_info,
+                "asignados_count": asignados_count,
+            })
+        trainers_from_db = trainers_with_info
+    
+    trainers_with_info = trainers_from_db
 
     return render(
         request,

@@ -4,7 +4,8 @@ from django.urls import path, include
 from fit.auth_views import CustomLoginView, CustomLogoutView
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # Admin de Django (cambiar a django-admin para no conflictuar con nuestras URLs)
+    path("django-admin/", admin.site.urls),
 
     # LOGIN / LOGOUT
     path(
@@ -18,6 +19,6 @@ urlpatterns = [
         name="logout",
     ),
 
-    # App fit
+    # App fit (debe ir después para que capture admin/ antes que Django admin)
     path("", include("fit.urls")),
 ]
