@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Historial de Progreso - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:2rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+    <div>
+      <h1 style="margin:0;">📊 Historial de Progreso</h1>
+      <p style="color:#6b7280;margin:0.5rem 0 0 0;">Revisa todas tus sesiones de entrenamiento registradas</p>
+    </div>
+    <a href="{% url 'progress_create' %}" class="btn btn-success">➕ Nueva Sesión</a>
+  </div>
+
+  <!-- Estadísticas del mes actual -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:1.5rem;">
+    <div class="card" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Sesiones Este Mes</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ total_sessions_month }}</div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Horas Entrenadas</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ total_time_hours_month|floatformat:1 }}</div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h3 style="margin:0 0 1rem 0;">🔍 Filtros</h3>
+    <form method="get" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;">
+      <div>
+        <label for="month" style="display:block;margin-bottom:0.5rem;font-weight:500;">Mes:</label>
+        <select name="month" id="month" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          <option value="">Todos</option>
+          {% for i in "123456789101112"|make_list %}
+            <option value="{{ i }}" {% if month_filter == i %}selected{% endif %}>
+              {% if i == "1" %}Enero{% elif i == "2" %}Febrero{% elif i == "3" %}Marzo{% elif i == "4" %}Abril{% elif i == "5" %}Mayo{% elif i == "6" %}Junio{% elif i == "7" %}Julio{% elif i == "8" %}Agosto{% elif i == "9" %}Septiembre{% elif i == "10" %}Octubre{% elif i == "11" %}Noviembre{% elif i == "12" %}Diciembre{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="year" style="display:block;margin-bottom:0.5rem;font-weight:500;">Año:</label>
+        <input type="number" name="year" id="year" value="{% if year_filter %}{{ year_filter }}{% else %}{{ 'now'|date:'Y' }}{% endif %}" min="2020" max="{% now 'Y' %}" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+      </div>
+      <div>
+        <label for="routine" style="display:block;margin-bottom:0.5rem;font-weight:500;">Rutina:</label>
+        <select name="routine" id="routine" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          <option value="">Todas</option>
+          {% for routine in user_routines %}
+            <option value="{{ routine.pk }}" {% if routine_filter == routine.pk|stringformat:"s" %}selected{% endif %}>
+              {{ routine.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display:flex;align-items:end;gap:0.5rem;">
+        <button type="submit" class="btn" style="flex:1;">Filtrar</button>
+        <a href="{% url 'progress_list' %}" class="btn btn-secondary">Limpiar</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lista de progreso -->
+  {% if progress_logs %}
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      {% for log in progress_logs %}
+        <div class="card" style="padding:1.5rem;border-left:4px solid #0b74de;">
+          <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:1rem;">
+            <div style="flex:1;">
+              <h4 style="margin:0 0 0.5rem 0;">
+                <a href="{% url 'routine_detail' log.routine.pk %}" style="text-decoration:none;color:#111827;">
+                  {{ log.routine.nombre }}
+                </a>
+              </h4>
+              <div style="display:flex;gap:1rem;flex-wrap:wrap;color:#6b7280;font-size:0.9rem;">
+                <span>📅 {{ log.fecha|date:"d M Y" }}</span>
+                {% if log.tiempo_seg %}
+                  <span>⏱️ {{ log.tiempo_seg }} segundos ({{ log.tiempo_seg|floatformat:0|add:0|div:60|floatformat:1 }} min)</span>
+                {% endif %}
+                {% if log.repeticiones %}
+                  <span>🔄 {{ log.repeticiones }} repeticiones</span>
+                {% endif %}
+                <span class="badge badge-primary">Esfuerzo: {{ log.esfuerzo }}/10</span>
+              </div>
+              {% if log.notas %}
+                <div style="margin-top:0.75rem;padding:0.75rem;background:#f9fafb;border-radius:6px;">
+                  <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">📝 Notas:</div>
+                  <div style="color:#374151;">{{ log.notas|linebreaks }}</div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <p>No has registrado progreso{% if month_filter or routine_filter %} con estos filtros{% endif %}.</p>
+      <a href="{% url 'progress_create' %}" class="btn btn-success">Registrar Primera Sesión</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

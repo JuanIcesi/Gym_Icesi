@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Ejercicios - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <h2 style="margin:0;">💪 Ejercicios Disponibles</h2>
+      <p style="color:#6b7280;margin:0.5rem 0 0 0;font-size:0.9rem;">
+        Explora el catálogo de ejercicios institucionales y creados por entrenadores
+      </p>
+    </div>
+    {% if user.is_staff or user.is_superuser %}
+      <a href="{% url 'trainer_exercise_create' %}" class="btn btn-success">➕ Crear Ejercicio</a>
+    {% endif %}
+  </div>
+
+  <!-- Formulario de búsqueda y filtros mejorado -->
+  <form method="get" style="background:#f9fafb;padding:1.5rem;border-radius:12px;margin-bottom:1.5rem;border:1px solid #e5e7eb;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:1rem;align-items:end;">
+      <div>
+        <label for="q" style="display:block;margin-bottom:0.5rem;font-weight:500;">🔍 Buscar por nombre</label>
+        <input type="text" name="q" id="q" value="{{ search_query }}" placeholder="Ej: sentadillas, cardio..." style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+      </div>
+      <div>
+        <label for="tipo" style="display:block;margin-bottom:0.5rem;font-weight:500;">📋 Tipo</label>
+        <select name="tipo" id="tipo" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          <option value="">Todos</option>
+          <option value="cardio" {% if tipo_filter == "cardio" %}selected{% endif %}>Cardio</option>
+          <option value="fuerza" {% if tipo_filter == "fuerza" %}selected{% endif %}>Fuerza</option>
+          <option value="movilidad" {% if tipo_filter == "movilidad" %}selected{% endif %}>Movilidad</option>
+        </select>
+      </div>
+      <div>
+        <label for="dificultad" style="display:block;margin-bottom:0.5rem;font-weight:500;">⭐ Dificultad</label>
+        <select name="dificultad" id="dificultad" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          <option value="">Todas</option>
+          <option value="1" {% if dificultad_filter == "1" %}selected{% endif %}>Baja (1)</option>
+          <option value="2" {% if dificultad_filter == "2" %}selected{% endif %}>Media-Baja (2)</option>
+          <option value="3" {% if dificultad_filter == "3" %}selected{% endif %}>Media (3)</option>
+          <option value="4" {% if dificultad_filter == "4" %}selected{% endif %}>Media-Alta (4)</option>
+          <option value="5" {% if dificultad_filter == "5" %}selected{% endif %}>Alta (5)</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn" style="margin-bottom:0.5rem;">🔍 Buscar</button>
+        {% if search_query or tipo_filter or dificultad_filter %}
+          <a href="{% url 'exercises_list' %}" class="btn btn-secondary" style="display:block;">Limpiar</a>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+
+  {% if exercises %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:1.5rem;">
+      {% for exercise in exercises %}
+        <div class="card" style="padding:1.5rem;border:1px solid #e5e7eb;transition:all 0.3s;cursor:pointer;" onmouseover="this.style.borderColor='#0b74de';this.style.boxShadow='0 4px 12px rgba(11,116,222,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem;">
+            <h4 style="margin:0;flex:1;">
+              <a href="{% url 'exercise_detail' exercise.pk %}" style="text-decoration:none;color:#111827;">
+                {{ exercise.nombre }}
+              </a>
+            </h4>
+            {% if exercise.es_personalizado and exercise.creado_por %}
+              <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:0.75rem;" title="Creado por entrenador">
+                🏋️ Entrenador
+              </span>
+            {% else %}
+              <span class="badge" style="background:#f3f4f6;color:#6b7280;font-size:0.75rem;" title="Ejercicio institucional">
+                🏛️ Institucional
+              </span>
+            {% endif %}
+          </div>
+          
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+            <span class="badge badge-{{ exercise.tipo }}" style="font-size:0.85rem;">
+              {{ exercise.get_tipo_display }}
+            </span>
+            {% if exercise.dificultad %}
+              <span class="badge" style="background:#fef3c7;color:#92400e;font-size:0.85rem;">
+                ⭐ {{ exercise.dificultad }}/5
+              </span>
+            {% endif %}
+            {% if exercise.duracion_min %}
+              <span class="badge" style="background:#e0e7ff;color:#3730a3;font-size:0.85rem;">
+                ⏱️ {{ exercise.duracion_min }} min
+              </span>
+            {% endif %}
+          </div>
+          
+          {% if exercise.descripcion %}
+            <p style="color:#6b7280;font-size:0.9rem;margin-bottom:1rem;line-height:1.5;">
+              {{ exercise.descripcion|truncatewords:20 }}
+            </p>
+          {% endif %}
+          
+          <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+            <a href="{% url 'exercise_detail' exercise.pk %}" class="btn btn-sm" style="flex:1;">Ver Detalles</a>
+            {% if user_routines %}
+              <button onclick="openAddToRoutineModal({{ exercise.pk }}, '{{ exercise.nombre }}')" class="btn btn-sm btn-success" style="flex:1;">
+                ➕ Agregar
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">💪</div>
+      <p>No se encontraron ejercicios{% if search_query or tipo_filter or dificultad_filter %} con los filtros aplicados{% endif %}.</p>
+      {% if search_query or tipo_filter or dificultad_filter %}
+        <a href="{% url 'exercises_list' %}" class="btn">Ver Todos los Ejercicios</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+<!-- Modal para agregar ejercicio a rutina -->
+{% if user_routines %}
+<div id="addToRoutineModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div class="card" style="max-width:500px;width:90%;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h3 style="margin:0;">Agregar a Rutina</h3>
+      <button onclick="closeAddToRoutineModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;">&times;</button>
+    </div>
+    <p style="color:#6b7280;margin-bottom:1.5rem;">
+      Selecciona una rutina para agregar: <strong id="exerciseNameModal"></strong>
+    </p>
+    <form method="post" action="{% url 'routine_add_item' 0 %}" id="addToRoutineForm">
+      {% csrf_token %}
+      <input type="hidden" name="exercise_id" id="exerciseIdInput">
+      <div style="margin-bottom:1rem;">
+        <label for="routineSelect" style="display:block;margin-bottom:0.5rem;font-weight:500;">Rutina:</label>
+        <select name="routine_id" id="routineSelect" required style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          <option value="">Selecciona una rutina...</option>
+          {% for routine in user_routines %}
+            <option value="{{ routine.pk }}">{{ routine.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <button type="submit" class="btn btn-success" style="flex:1;">Agregar</button>
+        <button type="button" onclick="closeAddToRoutineModal()" class="btn btn-secondary" style="flex:1;">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAddToRoutineModal(exerciseId, exerciseName) {
+  document.getElementById('exerciseIdInput').value = exerciseId;
+  document.getElementById('exerciseNameModal').textContent = exerciseName;
+  document.getElementById('addToRoutineModal').style.display = 'flex';
+}
+
+function closeAddToRoutineModal() {
+  document.getElementById('addToRoutineModal').style.display = 'none';
+  document.getElementById('routineSelect').value = '';
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('addToRoutineModal')?.addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeAddToRoutineModal();
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

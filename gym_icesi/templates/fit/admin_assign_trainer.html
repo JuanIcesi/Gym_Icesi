@@ -2,58 +2,147 @@
 {% block title %}Asignar Entrenador - Gym Icesi{% endblock %}
 
 {% block content %}
-<div class="card">
-  <h2>⚙️ Asignar Entrenador a Usuario</h2>
-  <p class="muted">Asigna o modifica la asignación de un entrenador a un usuario del sistema.</p>
+<div style="margin-bottom:2rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+    <div>
+      <h1 style="margin:0;">⚙️ Asignar Entrenadores a Usuarios</h1>
+      <p style="color:#6b7280;margin:0.5rem 0 0 0;">Gestiona las asignaciones de entrenadores a usuarios del sistema.</p>
+    </div>
+    <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+  </div>
+</div>
 
-  <form method="post" style="margin-top:2rem;">
+<!-- Formulario de Asignación -->
+<div class="card" style="margin-bottom:2rem;">
+  <h3 style="margin:0 0 1rem 0;">➕ Nueva Asignación</h3>
+  
+  <form method="post">
     {% csrf_token %}
+    <input type="hidden" name="action" value="assign">
     
-    <div class="form-group">
-      <label for="user_id">Usuario *</label>
-      <select name="user_id" id="user_id" class="form-control" required>
-        <option value="">-- Selecciona un usuario --</option>
-        {% for u in users %}
-          <option value="{{ u.id }}">
-            {{ u.username }}
-            {% if u.first_name or u.last_name %}
-              - {{ u.first_name }} {{ u.last_name }}
-            {% endif %}
-          </option>
-        {% endfor %}
-      </select>
-      <small>Usuarios que no son entrenadores</small>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+      <div>
+        <label for="user_id" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          👤 Usuario <span style="color:#ef4444;">*</span>
+        </label>
+        <select name="user_id" id="user_id" required style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          <option value="">-- Selecciona un usuario --</option>
+          {% for item in users %}
+            <option value="{{ item.user.id }}">
+              {{ item.user.username }}
+              {% if item.user_info.first_name or item.user_info.last_name %}
+                - {{ item.user_info.first_name }} {{ item.user_info.last_name }}
+              {% endif %}
+              {% if item.current_assignment %}
+                (Ya tiene: {{ item.current_assignment.trainer.username }})
+              {% endif %}
+            </option>
+          {% endfor %}
+        </select>
+        <p style="font-size:0.85rem;color:#6b7280;margin:0.25rem 0 0 0;">
+          Usuarios estándar (estudiantes/colaboradores)
+        </p>
+      </div>
+
+      <div>
+        <label for="trainer_id" style="display:block;margin-bottom:0.5rem;font-weight:500;">
+          🏋️ Entrenador <span style="color:#ef4444;">*</span>
+        </label>
+        <select name="trainer_id" id="trainer_id" required style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          <option value="">-- Selecciona un entrenador --</option>
+          {% for item in trainers %}
+            <option value="{{ item.trainer.id }}">
+              {{ item.trainer.username }}
+              {% if item.trainer_info.first_name or item.trainer_info.last_name %}
+                - {{ item.trainer_info.first_name }} {{ item.trainer_info.last_name }}
+              {% endif %}
+              ({{ item.asignados_count }} asignados)
+            </option>
+          {% endfor %}
+        </select>
+        <p style="font-size:0.85rem;color:#6b7280;margin:0.25rem 0 0 0;">
+          Entrenadores certificados (instructores)
+        </p>
+      </div>
     </div>
 
-    <div class="form-group" style="margin-top:1.5rem;">
-      <label for="trainer_id">Entrenador *</label>
-      <select name="trainer_id" id="trainer_id" class="form-control" required>
-        <option value="">-- Selecciona un entrenador --</option>
-        {% for t in trainers %}
-          <option value="{{ t.id }}">
-            {{ t.username }}
-            {% if t.first_name or t.last_name %}
-              - {{ t.first_name }} {{ t.last_name }}
-            {% endif %}
-          </option>
-        {% endfor %}
-      </select>
-      <small>Usuarios con permisos de entrenador (staff)</small>
-    </div>
-
-    <div style="display:flex;gap:1rem;margin-top:2rem;">
+    <div style="display:flex;gap:1rem;">
       <button type="submit" class="btn btn-success" style="flex:1;">✓ Guardar Asignación</button>
-      <a href="{% url 'home' %}" class="btn" style="background:#e5e7eb;color:#374151;flex:1;text-align:center;">Cancelar</a>
+      <a href="{% url 'home' %}" class="btn btn-secondary" style="flex:1;text-align:center;">Cancelar</a>
     </div>
   </form>
 </div>
 
-<!-- Info sobre asignaciones existentes -->
-<div class="card" style="margin-top:2rem;background:#f0fdf4;border-color:#bbf7d0;">
-  <h3 style="color:#166534;">ℹ️ Información</h3>
-  <p style="color:#15803d;margin-bottom:0;">
-    Si el usuario ya tiene un entrenador asignado, esta acción actualizará la asignación.
-    Solo puede haber una asignación activa por usuario a la vez.
-  </p>
+<!-- Búsqueda de Usuarios -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">🔍 Buscar Usuarios</h3>
+  <form method="get" style="display:flex;gap:1rem;align-items:end;">
+    <div style="flex:1;">
+      <label for="search_user" style="display:block;margin-bottom:0.5rem;font-weight:500;">Buscar usuario:</label>
+      <input type="text" name="search_user" id="search_user" value="{{ search_user }}" placeholder="Nombre de usuario..." style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+    </div>
+    <div>
+      <button type="submit" class="btn">Buscar</button>
+      {% if search_user %}
+        <a href="{% url 'admin_assign_trainer' %}" class="btn btn-secondary" style="display:block;margin-top:0.5rem;">Limpiar</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Lista de Usuarios con Asignaciones Actuales -->
+<div class="card">
+  <h3 style="margin:0 0 1rem 0;">👥 Usuarios y Sus Asignaciones Actuales</h3>
+  
+  {% if users %}
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      {% for item in users %}
+        <div style="padding:1.5rem;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
+          <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:1rem;">
+            <div style="flex:1;">
+              <h4 style="margin:0 0 0.5rem 0;color:#111827;">
+                {{ item.user_info.first_name|default:"" }} {{ item.user_info.last_name|default:item.user.username }}
+              </h4>
+              <div style="color:#6b7280;font-size:0.9rem;">
+                <div>👤 Usuario: {{ item.user.username }}</div>
+                {% if item.user_info.campus %}
+                  <div>📍 Campus: {{ item.user_info.campus }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              {% if item.current_assignment %}
+                <div style="margin-bottom:0.5rem;">
+                  <span class="badge badge-success" style="font-size:0.85rem;">Con Entrenador</span>
+                </div>
+                <div style="color:#6b7280;font-size:0.9rem;margin-bottom:0.75rem;">
+                  <strong>{{ item.current_assignment.trainer.username }}</strong><br>
+                  <span style="font-size:0.85rem;">Desde: {{ item.current_assignment.fecha_asignacion|date:"d M Y" }}</span>
+                </div>
+                <form method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="deactivate">
+                  <input type="hidden" name="assignment_id" value="{{ item.current_assignment.id }}">
+                  <button type="submit" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;">
+                    Desactivar
+                  </button>
+                </form>
+              {% else %}
+                <span class="badge" style="background:#fee2e2;color:#991b1b;font-size:0.85rem;">Sin Entrenador</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">👥</div>
+      <p>No se encontraron usuarios{% if search_user %} con ese criterio{% endif %}.</p>
+      {% if search_user %}
+        <a href="{% url 'admin_assign_trainer' %}" class="btn">Ver Todos</a>
+      {% endif %}
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

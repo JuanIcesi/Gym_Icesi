@@ -3,6 +3,7 @@
 Vistas personalizadas de autenticación
 """
 from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django import forms
 from django.shortcuts import redirect
@@ -30,11 +31,54 @@ class CustomLoginView(LoginView):
         
         return form
     
+    def form_valid(self, form):
+        """
+        Cuando el formulario es válido, intentar autenticar
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        username = form.cleaned_data.get('username')
+        password = form.cleaned_data.get('password')
+        
+        logger.info(f"CustomLoginView.form_valid: usuario={username}")
+        
+        # Autenticar manualmente para asegurar que use nuestro backend
+        user = authenticate(
+            request=self.request,
+            username=username,
+            password=password
+        )
+        
+        if user is not None:
+            if user.is_active:
+                login(self.request, user)
+                logger.info(f"Login exitoso para: {username}")
+                return redirect(self.get_success_url())
+            else:
+                logger.warning(f"Usuario inactivo: {username}")
+                messages.error(self.request, "Esta cuenta está inactiva.")
+                return self.form_invalid(form)
+        else:
+            logger.warning(f"Autenticación fallida para: {username}")
+            messages.error(
+                self.request,
+                "Las credenciales ingresadas son incorrectas. Por favor, verifica tu usuario y contraseña.",
+                extra_tags="login_error"
+            )
+            return self.form_invalid(form)
+    
     def form_invalid(self, form):
         """
         Cuando el formulario es inválido (credenciales incorrectas),
         mostrar un mensaje claro al usuario
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        username = form.data.get('username', 'N/A')
+        logger.warning(f"Login fallido para usuario: {username}")
+        
         # Agregar mensaje adicional para mayor claridad
         if form.non_field_errors():
             messages.error(

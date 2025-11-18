@@ -4,103 +4,169 @@
 {% block title %}Detalle de rutina - {{ routine.nombre }}{% endblock %}
 
 {% block content %}
-<section class="card">
-  <header class="card-header">
-    <h2>{{ routine.nombre }}</h2>
-    <p class="muted">
-      Creada por:
-      {% if routine.es_predisenada %}
-        <strong>Bienestar / Entrenador institucional</strong>
-      {% else %}
-        <strong>{{ routine.user.username }}</strong>
-      {% endif %}
-      · {{ routine.fecha_creacion|date:"d/m/Y" }}
-    </p>
-  </header>
+<div class="card">
+  <div style="margin-bottom:1.5rem;">
+    <a href="{% url 'routine_list' %}" class="btn btn-secondary" style="margin-bottom:1rem;">← Volver a Mis Rutinas</a>
+    
+    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:1rem;">
+      <div style="flex:1;">
+        <h1 style="margin:0 0 0.5rem 0;">{{ routine.nombre }}</h1>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;color:#6b7280;font-size:0.9rem;">
+          <span>
+            Creada: {{ routine.fecha_creacion|date:"d M Y" }}
+          </span>
+          {% if routine.es_predisenada %}
+            <span class="badge" style="background:#dbeafe;color:#1e40af;">
+              🏋️ Prediseñada
+            </span>
+            {% if routine.autor_trainer %}
+              <span>
+                Por: {{ routine.autor_trainer.username }}
+              </span>
+            {% endif %}
+          {% else %}
+            <span class="badge" style="background:#f3f4f6;color:#6b7280;">
+              📝 Personalizada
+            </span>
+          {% endif %}
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        {% if routine.user == user %}
+          <a href="{% url 'progress_create' %}?routine={{ routine.pk }}" class="btn btn-success">
+            ✅ Registrar Progreso
+          </a>
+        {% elif routine.es_predisenada and routine.user != user %}
+          <a href="{% url 'routine_adopt' routine.pk %}" class="btn btn-success">
+            📋 Adoptar esta rutina
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 
-  <div class="card-body">
-    {% if routine.descripcion %}
-      <p>{{ routine.descripcion }}</p>
-      <hr>
-    {% endif %}
+  {% if routine.descripcion %}
+    <div style="padding:1.5rem;background:#f9fafb;border-radius:8px;margin-bottom:1.5rem;border-left:4px solid #0b74de;">
+      <h3 style="margin:0 0 0.75rem 0;color:#111827;">📝 Descripción</h3>
+      <p style="margin:0;line-height:1.6;color:#374151;">{{ routine.descripcion|linebreaks }}</p>
+    </div>
+  {% endif %}
 
-    <h3>Ejercicios de la rutina</h3>
+  <div style="margin-bottom:1.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h3 style="margin:0;">💪 Ejercicios de la Rutina</h3>
+      <span class="badge badge-primary">{{ items|length }} ejercicio{{ items|length|pluralize }}</span>
+    </div>
 
     {% if items %}
-      <div class="exercise-list">
+      <div style="display:flex;flex-direction:column;gap:1rem;">
         {% for it in items %}
-          <div class="exercise-card">
-            <div class="exercise-header">
-              <div class="exercise-number">{{ it.orden }}</div>
-              <div class="exercise-info">
-                <h4>{{ it.exercise.nombre }}</h4>
-                <span class="badge badge-{{ it.exercise.tipo }}">{{ it.exercise.get_tipo_display }}</span>
-                {% if it.exercise.dificultad %}
-                  <span class="difficulty-badge">Dificultad: {{ it.exercise.dificultad }}/5</span>
+          <div style="padding:1.5rem;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
+            <div style="display:flex;gap:1rem;align-items:start;">
+              <div style="width:40px;height:40px;background:#0b74de;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0;">
+                {{ it.orden }}
+              </div>
+              <div style="flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+                  <div>
+                    <h4 style="margin:0 0 0.5rem 0;">
+                      <a href="{% url 'exercise_detail' it.exercise.pk %}" style="text-decoration:none;color:#111827;">
+                        {{ it.exercise.nombre }}
+                      </a>
+                    </h4>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                      <span class="badge badge-{{ it.exercise.tipo }}" style="font-size:0.85rem;">
+                        {{ it.exercise.get_tipo_display }}
+                      </span>
+                      {% if it.exercise.dificultad %}
+                        <span class="badge" style="background:#fef3c7;color:#92400e;font-size:0.85rem;">
+                          ⭐ {{ it.exercise.dificultad }}/5
+                        </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                
+                {% if it.exercise.descripcion %}
+                  <p style="color:#6b7280;font-size:0.9rem;margin:0 0 0.75rem 0;line-height:1.5;">
+                    {{ it.exercise.descripcion|truncatewords:25 }}
+                  </p>
+                {% endif %}
+                
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));gap:1rem;margin-bottom:0.75rem;">
+                  {% if it.series %}
+                    <div style="padding:0.75rem;background:white;border-radius:6px;border:1px solid #e5e7eb;">
+                      <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Series</div>
+                      <div style="font-size:1.25rem;font-weight:600;color:#111827;">{{ it.series }}</div>
+                    </div>
+                  {% endif %}
+                  {% if it.reps %}
+                    <div style="padding:0.75rem;background:white;border-radius:6px;border:1px solid #e5e7eb;">
+                      <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Repeticiones</div>
+                      <div style="font-size:1.25rem;font-weight:600;color:#111827;">{{ it.reps }}</div>
+                    </div>
+                  {% endif %}
+                  {% if it.tiempo_seg %}
+                    <div style="padding:0.75rem;background:white;border-radius:6px;border:1px solid #e5e7eb;">
+                      <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Tiempo</div>
+                      <div style="font-size:1.25rem;font-weight:600;color:#111827;">{{ it.tiempo_seg }}s</div>
+                    </div>
+                  {% endif %}
+                </div>
+                
+                {% if it.notas %}
+                  <div style="padding:0.75rem;background:#fffbeb;border-radius:6px;border-left:3px solid #fbbf24;">
+                    <div style="font-size:0.85rem;color:#92400e;font-weight:500;margin-bottom:0.25rem;">📝 Notas:</div>
+                    <div style="font-size:0.9rem;color:#78350f;">{{ it.notas }}</div>
+                  </div>
+                {% endif %}
+                
+                {% if it.exercise.video_url %}
+                  <div style="margin-top:0.75rem;">
+                    {% with video_id=it.exercise.video_url|youtube_id %}
+                      {% if video_id %}
+                        <div style="border-radius:8px;overflow:hidden;">
+                          <iframe width="100%" height="315" src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:8px;"></iframe>
+                        </div>
+                      {% else %}
+                        <a href="{{ it.exercise.video_url }}" target="_blank" class="btn btn-sm" style="display:inline-flex;align-items:center;gap:0.5rem;">
+                          <span>▶️</span>
+                          Ver video demostrativo
+                        </a>
+                      {% endif %}
+                    {% endwith %}
+                  </div>
                 {% endif %}
               </div>
-            </div>
-            
-            {% if it.exercise.descripcion %}
-              <p class="exercise-description">{{ it.exercise.descripcion }}</p>
-            {% endif %}
-            
-            {% if it.exercise.video_url %}
-              <div class="exercise-video">
-                {% with video_id=it.exercise.video_url|youtube_id %}
-                  {% if video_id %}
-                    <div class="video-embed">
-                      <iframe width="100%" height="315" src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    </div>
-                  {% else %}
-                    <a href="{{ it.exercise.video_url }}" target="_blank" class="video-link">
-                      <span class="video-icon">▶️</span> Ver video demostrativo
-                    </a>
-                  {% endif %}
-                {% endwith %}
-              </div>
-            {% endif %}
-            
-            <div class="exercise-details">
-              <div class="detail-item">
-                <strong>Series:</strong> {{ it.series|default:"-" }}
-              </div>
-              <div class="detail-item">
-                <strong>Reps:</strong> {{ it.reps|default:"-" }}
-              </div>
-              <div class="detail-item">
-                <strong>Tiempo:</strong> {{ it.tiempo_seg|default:"-" }} seg
-              </div>
-              {% if it.notas %}
-                <div class="detail-item notes">
-                  <strong>Notas:</strong> {{ it.notas }}
-                </div>
-              {% endif %}
             </div>
           </div>
         {% endfor %}
       </div>
     {% else %}
-      <p class="muted">Esta rutina aún no tiene ejercicios.</p>
+      <div class="empty-state">
+        <div class="empty-state-icon">💪</div>
+        <p>Esta rutina aún no tiene ejercicios.</p>
+        {% if routine.user == user %}
+          <a href="{% url 'routine_add_item' routine.pk %}" class="btn">➕ Agregar Primer Ejercicio</a>
+        {% endif %}
+      </div>
     {% endif %}
-
-    <div class="actions" style="margin-top: 1rem;">
-      {% if routine.user == user %}
-        <a href="{% url 'routine_add_item' routine.pk %}" class="btn">
-          ➕ Agregar ejercicio
-        </a>
-      {% elif routine.es_predisenada and routine.user != user %}
-        <a href="{% url 'routine_adopt' routine.pk %}" class="btn btn-success">
-          📋 Adoptar esta rutina
-        </a>
-      {% elif routine.es_predisenada and routine.autor_trainer == user and user.is_staff %}
-        <a href="{% url 'routine_add_item' routine.pk %}" class="btn">
-          ➕ Agregar ejercicio
-        </a>
-      {% endif %}
-
-      <a href="{% url 'routine_list' %}" class="btn-ghost">← Volver a mis rutinas</a>
-    </div>
   </div>
-</section>
+
+  <div style="padding-top:1.5rem;border-top:2px solid #e5e7eb;display:flex;gap:1rem;flex-wrap:wrap;">
+    {% if routine.user == user %}
+      <a href="{% url 'routine_add_item' routine.pk %}" class="btn">
+        ➕ Añadir Ejercicio
+      </a>
+      <a href="{% url 'progress_create' %}?routine={{ routine.pk }}" class="btn btn-success">
+        ✅ Registrar Progreso usando esta Rutina
+      </a>
+    {% elif routine.es_predisenada and routine.autor_trainer == user and user.is_staff %}
+      <a href="{% url 'routine_add_item' routine.pk %}" class="btn">
+        ➕ Agregar Ejercicio
+      </a>
+    {% endif %}
+    <a href="{% url 'routine_list' %}" class="btn btn-secondary">← Volver a Mis Rutinas</a>
+  </div>
+</div>
 {% endblock %}

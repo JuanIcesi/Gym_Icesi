@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Administrador - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e5e7eb;">
+  <h1 style="margin:0 0 0.5rem 0;">
+    Hola, {{ info.first_name|default:user.username }} 👋
+  </h1>
+  {% if info.faculty %}
+    <p style="color:#6b7280;margin:0;">
+      <strong>Facultad:</strong> {{ info.faculty }} | Panel de Administración
+    </p>
+  {% endif %}
+</div>
+
+<!-- Stats Cards Globales -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:2rem;">
+  <div class="card" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Usuarios</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_usuarios }}</div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Entrenadores</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_entrenadores }}</div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Rutinas</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_rutinas }}</div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Total Sesiones</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ total_sesiones }}</div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg, #fa709a 0%, #fee140 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Usuarios Activos</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ usuarios_activos }}</div>
+    <div style="font-size:0.85rem;opacity:0.8;margin-top:0.25rem;">Este mes</div>
+  </div>
+</div>
+
+<!-- Usuarios con/sin entrenador -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">👥 Asignación de Entrenadores</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+    <div style="padding:1.5rem;background:#f0fdf4;border-radius:8px;border:2px solid #86efac;">
+      <div style="font-size:0.9rem;color:#166534;margin-bottom:0.5rem;">Con Entrenador Asignado</div>
+      <div style="font-size:2.5rem;font-weight:bold;color:#15803d;">{{ usuarios_con_entrenador }}</div>
+    </div>
+    <div style="padding:1.5rem;background:#fef2f2;border-radius:8px;border:2px solid #fca5a5;">
+      <div style="font-size:0.9rem;color:#991b1b;margin-bottom:0.5rem;">Sin Entrenador</div>
+      <div style="font-size:2.5rem;font-weight:bold;color:#dc2626;">{{ usuarios_sin_entrenador }}</div>
+    </div>
+  </div>
+  <div style="margin-top:1rem;">
+    <a href="{% url 'admin_assign_trainer' %}" class="btn btn-success">👥 Gestionar Asignaciones</a>
+  </div>
+</div>
+
+<!-- Estadísticas del Mes Actual -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">📊 Estadísticas del Mes Actual</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;">
+    <div style="padding:1rem;background:#f9fafb;border-radius:8px;text-align:center;">
+      <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Rutinas Creadas</div>
+      <div style="font-size:2rem;font-weight:bold;color:#111827;">{{ stats_mes_actual.rutinas_creadas }}</div>
+    </div>
+    <div style="padding:1rem;background:#f9fafb;border-radius:8px;text-align:center;">
+      <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Sesiones Registradas</div>
+      <div style="font-size:2rem;font-weight:bold;color:#111827;">{{ stats_mes_actual.sesiones_registradas }}</div>
+    </div>
+    <div style="padding:1rem;background:#f9fafb;border-radius:8px;text-align:center;">
+      <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Asignaciones Nuevas</div>
+      <div style="font-size:2rem;font-weight:bold;color:#111827;">{{ stats_mes_actual.asignaciones_nuevas }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="margin-bottom:1.5rem;">
+  <!-- Entrenadores con Más Carga -->
+  <div class="col">
+    <div class="card">
+      <h3 style="margin:0 0 1rem 0;">🏋️ Entrenadores con Más Carga</h3>
+      {% if entrenadores_carga %}
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          {% for trainer in entrenadores_carga %}
+            <div style="padding:1rem;background:#f9fafb;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <strong style="color:#111827;">{{ trainer.name }}</strong>
+                <div style="color:#6b7280;font-size:0.85rem;">{{ trainer.username }}</div>
+              </div>
+              <span class="badge badge-primary" style="font-size:1rem;">{{ trainer.total_asignados }} usuarios</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">🏋️</div>
+          <p>No hay datos de entrenadores aún.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Usuarios Más Activos -->
+  <div class="col">
+    <div class="card">
+      <h3 style="margin:0 0 1rem 0;">🔥 Usuarios Más Activos (Este Mes)</h3>
+      {% if usuarios_mas_activos %}
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          {% for usuario in usuarios_mas_activos %}
+            <div style="padding:1rem;background:#f9fafb;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <strong style="color:#111827;">{{ usuario.name }}</strong>
+                <div style="color:#6b7280;font-size:0.85rem;">{{ usuario.username }}</div>
+              </div>
+              <span class="badge badge-success" style="font-size:1rem;">{{ usuario.sesiones }} sesiones</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">🔥</div>
+          <p>No hay actividad este mes aún.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Rutinas Más Usadas -->
+{% if rutinas_mas_usadas %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">📋 Rutinas Más Usadas</h3>
+  <div style="display:flex;flex-direction:column;gap:0.75rem;">
+    {% for rutina in rutinas_mas_usadas %}
+      <div style="padding:1rem;background:#f9fafb;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+        <strong style="color:#111827;">{{ rutina.routine__nombre }}</strong>
+        <span class="badge badge-primary" style="font-size:1rem;">{{ rutina.veces_usada }} veces</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Acciones de Administración -->
+<div class="card" style="background:linear-gradient(135deg, #0b74de 0%, #4a7c59 100%);color:white;margin-bottom:1.5rem;">
+  <h3 style="color:white;margin-bottom:1rem;">⚙️ Acciones de Administración</h3>
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+    <a href="{% url 'admin_assign_trainer' %}" class="btn" style="background:white;color:#0b74de;font-weight:500;">👥 Asignar Entrenadores</a>
+    <a href="{% url 'trainers_list' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">🏋️ Ver Entrenadores</a>
+    <a href="/admin/" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">⚙️ Panel Django Admin</a>
+  </div>
+</div>
+{% endblock %}

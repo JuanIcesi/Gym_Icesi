@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Entrenador - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e5e7eb;">
+  <h1 style="margin:0 0 0.5rem 0;">
+    Hola, {{ info.first_name|default:user.username }} 👋
+  </h1>
+  {% if info.faculty %}
+    <p style="color:#6b7280;margin:0;">
+      <strong>Facultad:</strong> {{ info.faculty }}
+    </p>
+  {% endif %}
+</div>
+
+<!-- Tarjetas Resumen -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:2rem;">
+  <div class="card" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Usuarios Asignados</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ asignados }}</div>
+    <a href="{% url 'trainer_assignees' %}" class="btn btn-sm" style="margin-top:0.75rem;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;">Ver todos →</a>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Sesiones Registradas</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ sesiones_usuarios_mes }}</div>
+    <div style="font-size:0.85rem;opacity:0.8;margin-top:0.25rem;">Este mes</div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Rutinas Prediseñadas</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ rutinas_predisenadas }}</div>
+    <a href="{% url 'trainer_routines' %}" class="btn btn-sm" style="margin-top:0.75rem;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;">Ver todas →</a>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);color:white;padding:1.5rem;">
+    <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Recomendaciones</div>
+    <div style="font-size:2.5rem;font-weight:bold;">{{ recomendaciones_mes }}</div>
+    <div style="font-size:0.85rem;opacity:0.8;margin-top:0.25rem;">Este mes</div>
+  </div>
+</div>
+
+<!-- Usuarios que necesitan atención -->
+{% if usuarios_necesitan_atencion %}
+<div class="card" style="background:#fef3c7;border:2px solid #fde68a;margin-bottom:1.5rem;">
+  <h3 style="color:#92400e;margin:0 0 1rem 0;">⚠️ Usuarios que Necesitan Atención</h3>
+  <p style="color:#78350f;margin-bottom:1rem;font-size:0.9rem;">
+    Estos usuarios no han registrado progreso en los últimos 7 días o más.
+  </p>
+  <div style="display:flex;flex-direction:column;gap:0.75rem;">
+    {% for item in usuarios_necesitan_atencion %}
+      <div style="padding:1rem;background:white;border-radius:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+        <div style="flex:1;">
+          <strong style="color:#111827;">
+            {{ item.user_info.first_name|default:"" }} {{ item.user_info.last_name|default:item.user.username }}
+          </strong>
+          <div style="color:#6b7280;font-size:0.9rem;margin-top:0.25rem;">
+            {% if item.ultima_sesion %}
+              Última sesión: {{ item.ultima_sesion.fecha|date:"d M Y" }} (hace {{ item.dias_sin_actividad }} días)
+            {% else %}
+              Sin sesiones registradas
+            {% endif %}
+          </div>
+        </div>
+        <a href="{% url 'trainer_feedback' item.user.id %}" class="btn btn-sm">Ver Detalles</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="row" style="margin-bottom:1.5rem;">
+  <!-- Últimos Usuarios Asignados -->
+  <div class="col">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="margin:0;">👥 Usuarios Asignados</h3>
+        <a href="{% url 'trainer_assignees' %}" class="btn btn-sm">Ver todos →</a>
+      </div>
+      
+      {% if ultimos_asignados %}
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          {% for item in ultimos_asignados %}
+            {% with asignado=item.assignment %}
+            <div style="padding:1rem;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+                <div style="flex:1;">
+                  <strong style="color:#111827;">
+                    {{ asignado.user.get_full_name|default:asignado.user.username }}
+                  </strong>
+                  <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+                    Asignado: {{ asignado.fecha_asignacion|date:"d M Y" }}
+                  </div>
+                </div>
+                <span class="badge" style="background:{% if item.nivel_actividad == 'Alto' %}#d1fae5{% elif item.nivel_actividad == 'Medio' %}#fef3c7{% else %}#fee2e2{% endif %};color:{% if item.nivel_actividad == 'Alto' %}#065f46{% elif item.nivel_actividad == 'Medio' %}#92400e{% else %}#991b1b{% endif %};font-size:0.75rem;">
+                  {{ item.nivel_actividad }}
+                </span>
+              </div>
+              <div style="display:flex;gap:1rem;flex-wrap:wrap;color:#6b7280;font-size:0.85rem;margin-bottom:0.75rem;">
+                {% if item.ultima_sesion %}
+                  <span>🔥 Última sesión: {{ item.ultima_sesion.fecha|date:"d M Y" }}</span>
+                {% else %}
+                  <span style="color:#9ca3af;">Sin sesiones</span>
+                {% endif %}
+                <span>📊 Sesiones este mes: {{ item.sesiones_mes }}</span>
+              </div>
+              <a href="{% url 'trainer_feedback' asignado.user.id %}" class="btn btn-sm">Ver Detalles</a>
+            </div>
+            {% endwith %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">👥</div>
+          <p>No tienes usuarios asignados aún.</p>
+          <p style="font-size:0.9rem;color:#6b7280;">Contacta al administrador para que te asignen usuarios.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Últimas Recomendaciones -->
+  <div class="col">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="margin:0;">💬 Últimas Recomendaciones</h3>
+      </div>
+      
+      {% if ultimas_recomendaciones %}
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          {% for rec in ultimas_recomendaciones %}
+            <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid #0b74de;">
+              <div style="margin-bottom:0.5rem;">
+                <strong style="color:#111827;">
+                  Para: {{ rec.user.get_full_name|default:rec.user.username }}
+                </strong>
+                <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+                  {{ rec.fecha|date:"d M Y H:i" }}
+                </div>
+              </div>
+              <p style="color:#374151;margin:0;font-size:0.9rem;line-height:1.5;">
+                {{ rec.mensaje|truncatewords:25 }}
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">💬</div>
+          <p>No has dado recomendaciones aún.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Atajos / Acciones Rápidas -->
+<div class="card" style="background:linear-gradient(135deg, #0b74de 0%, #4a7c59 100%);color:white;margin-bottom:1.5rem;">
+  <h3 style="color:white;margin-bottom:1rem;">⚡ Acciones Rápidas</h3>
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+    <a href="{% url 'trainer_assignees' %}" class="btn" style="background:white;color:#0b74de;font-weight:500;">👥 Ver Mis Usuarios</a>
+    <a href="{% url 'trainer_routine_create' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">📋 Crear Rutina Prediseñada</a>
+    <a href="{% url 'trainer_exercise_create' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">💪 Crear Ejercicio</a>
+    <a href="{% url 'trainer_routines' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">📋 Ver Mis Rutinas</a>
+  </div>
+</div>
+{% endblock %}

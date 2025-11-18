@@ -3,133 +3,169 @@
 
 {% block content %}
 <div style="margin-bottom:2rem;">
-  <h1>📊 Informe de Adherencia</h1>
-  <p>Seguimiento de tu actividad física del {{ periodo.0|date:"d M Y" }} al {{ periodo.1|date:"d M Y" }}</p>
-</div>
-
-<!-- Stats principales -->
-<div class="stats-grid" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));">
-  <div class="stat-card">
-    <span class="stat-icon">📅</span>
-    <div class="stat-value">{{ dias_activos }}</div>
-    <div class="stat-label">Días Activos</div>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-icon">💪</span>
-    <div class="stat-value">{{ por_tipo|length }}</div>
-    <div class="stat-label">Tipos de Ejercicio</div>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-icon">🔥</span>
-    <div class="stat-value">{{ porcentaje_adherencia }}%</div>
-    <div class="stat-label">Adherencia Mensual</div>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-icon">⚡</span>
-    <div class="stat-value">{{ esfuerzo_promedio }}/10</div>
-    <div class="stat-label">Esfuerzo Promedio</div>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-icon">📊</span>
-    <div class="stat-value">{{ total_sesiones }}</div>
-    <div class="stat-label">Total Sesiones</div>
-  </div>
-</div>
-
-<!-- Distribución por tipo -->
-<div class="card">
-  <h3>📈 Distribución de Sesiones por Tipo de Ejercicio</h3>
-  {% if por_tipo %}
-    <table>
-      <thead>
-        <tr>
-          <th>Tipo de Ejercicio</th>
-          <th style="text-align:center;">Sesiones</th>
-          <th style="text-align:right;">Progreso Visual</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in por_tipo %}
-          <tr>
-            <td>
-              <span class="badge badge-{{ row.routine__items__exercise__tipo }}">
-                {% if row.routine__items__exercise__tipo == 'cardio' %}🏃 Cardio
-                {% elif row.routine__items__exercise__tipo == 'fuerza' %}💪 Fuerza
-                {% elif row.routine__items__exercise__tipo == 'movilidad' %}🧘 Movilidad
-                {% else %}{{ row.routine__items__exercise__tipo|title }}
-                {% endif %}
-              </span>
-            </td>
-            <td style="text-align:center;font-weight:700;font-size:1.25rem;color:var(--brand);">
-              {{ row.sesiones }}
-            </td>
-            <td style="text-align:right;">
-              <div class="progress-bar" style="width:200px;max-width:100%;margin-left:auto;">
-                <div class="progress-fill" style="width:{% widthratio row.sesiones 20 100 %}%;"></div>
-              </div>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">📊</div>
-      <p>No hay datos de ejercicios para este período.</p>
-      <a href="{% url 'progress_create' %}" class="btn btn-success">Registrar Primera Sesión</a>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+    <div>
+      <h1 style="margin:0;">📊 Informe de Adherencia y Consistencia</h1>
+      <p style="color:#6b7280;margin:0.5rem 0 0 0;">Seguimiento de tu actividad física del {{ periodo.0|date:"d M Y" }} al {{ periodo.1|date:"d M Y" }}</p>
     </div>
+  </div>
+
+  <!-- Selector de mes/año -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <form method="get" style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;">
+      <div style="flex:1;min-width:150px;">
+        <label for="month" style="display:block;margin-bottom:0.5rem;font-weight:500;">Mes:</label>
+        <select name="month" id="month" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          {% for i in "123456789101112"|make_list %}
+            <option value="{{ i }}" {% if month == i|add:0 %}selected{% endif %}>
+              {% if i == "1" %}Enero{% elif i == "2" %}Febrero{% elif i == "3" %}Marzo{% elif i == "4" %}Abril{% elif i == "5" %}Mayo{% elif i == "6" %}Junio{% elif i == "7" %}Julio{% elif i == "8" %}Agosto{% elif i == "9" %}Septiembre{% elif i == "10" %}Octubre{% elif i == "11" %}Noviembre{% elif i == "12" %}Diciembre{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <label for="year" style="display:block;margin-bottom:0.5rem;font-weight:500;">Año:</label>
+        <input type="number" name="year" id="year" value="{{ year }}" min="2020" max="{% now 'Y' %}" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+      </div>
+      <div>
+        <button type="submit" class="btn">Ver Informe</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Stats principales -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:2rem;">
+    <div class="card" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Días Activos</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ dias_activos }}</div>
+      <div style="font-size:0.85rem;opacity:0.8;margin-top:0.25rem;">de {{ dias_del_mes }} días</div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Porcentaje Adherencia</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ porcentaje_adherencia }}%</div>
+      <div style="font-size:0.85rem;opacity:0.8;margin-top:0.25rem;">del mes</div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Racha Actual</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ racha_actual }}</div>
+      <div style="font-size:0.85rem;opacity:0.8;margin-top:0.25rem;">días consecutivos</div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Cumplimiento</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ porcentaje_cumplimiento }}%</div>
+      <div style="font-size:0.85rem;opacity:0.8;margin-top:0.25rem;">vs planificado</div>
+    </div>
+  </div>
+
+  <!-- Comparación: Días planificados vs reales -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h3 style="margin:0 0 1rem 0;">📅 Días Planificados vs Días Realmente Entrenados</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+      <div style="padding:1rem;background:#f0fdf4;border-radius:8px;border:2px solid #86efac;">
+        <div style="font-size:0.9rem;color:#166534;margin-bottom:0.5rem;">Días Planificados (Estimado)</div>
+        <div style="font-size:2rem;font-weight:bold;color:#15803d;">{{ dias_planificados_estimados }}</div>
+        <p style="font-size:0.85rem;color:#166534;margin:0.5rem 0 0 0;">
+          Basado en rutinas activas (3-4 veces por semana)
+        </p>
+      </div>
+      <div style="padding:1rem;background:#eff6ff;border-radius:8px;border:2px solid #93c5fd;">
+        <div style="font-size:0.9rem;color:#1e40af;margin-bottom:0.5rem;">Días Realmente Entrenados</div>
+        <div style="font-size:2rem;font-weight:bold;color:#2563eb;">{{ dias_activos }}</div>
+        <p style="font-size:0.85rem;color:#1e40af;margin:0.5rem 0 0 0;">
+          Sesiones registradas este mes
+        </p>
+      </div>
+    </div>
+    <div style="margin-top:1rem;padding:1rem;background:#f9fafb;border-radius:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+        <span style="font-weight:500;">Porcentaje de Cumplimiento:</span>
+        <span style="font-size:1.5rem;font-weight:bold;color:{% if porcentaje_cumplimiento >= 80 %}#10b981{% elif porcentaje_cumplimiento >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+          {{ porcentaje_cumplimiento }}%
+        </span>
+      </div>
+      <div style="background:#e5e7eb;border-radius:4px;height:12px;overflow:hidden;">
+        <div style="height:100%;background:{% if porcentaje_cumplimiento >= 80 %}#10b981{% elif porcentaje_cumplimiento >= 50 %}#f59e0b{% else %}#ef4444{% endif %};width:{% if porcentaje_cumplimiento > 100 %}100{% else %}{{ porcentaje_cumplimiento }}{% endif %}%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distribución por tipo -->
+  {% if por_tipo %}
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h3 style="margin:0 0 1rem 0;">📈 Distribución de Sesiones por Tipo de Ejercicio</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;">
+      {% for row in por_tipo %}
+        <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid {% if row.routine__items__exercise__tipo == 'cardio' %}#ef4444{% elif row.routine__items__exercise__tipo == 'fuerza' %}#3b82f6{% else %}#10b981{% endif %};">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <span class="badge badge-{{ row.routine__items__exercise__tipo }}" style="font-size:0.9rem;">
+              {% if row.routine__items__exercise__tipo == 'cardio' %}🏃 Cardio
+              {% elif row.routine__items__exercise__tipo == 'fuerza' %}💪 Fuerza
+              {% elif row.routine__items__exercise__tipo == 'movilidad' %}🧘 Movilidad
+              {% else %}{{ row.routine__items__exercise__tipo|title }}
+              {% endif %}
+            </span>
+            <strong style="font-size:1.5rem;color:#111827;">{{ row.sesiones }}</strong>
+          </div>
+          <div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden;">
+            <div style="height:100%;background:{% if row.routine__items__exercise__tipo == 'cardio' %}#ef4444{% elif row.routine__items__exercise__tipo == 'fuerza' %}#3b82f6{% else %}#10b981{% endif %};width:{% widthratio row.sesiones total_sesiones 100 %}%;"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
   {% endif %}
-</div>
 
-<!-- Recomendaciones -->
-<div class="card" style="background:#f0fdf4;border-color:#bbf7d0;margin-top:1.5rem;">
-  <h3 style="color:#166534;">💡 Recomendaciones</h3>
-  {% if dias_activos >= 15 %}
-    <p style="color:#15803d;margin-bottom:0;">
-      ¡Excelente adherencia! Estás manteniendo una rutina consistente.
-      Continúa así para maximizar tus resultados.
-    </p>
-  {% elif dias_activos >= 8 %}
-    <p style="color:#15803d;margin-bottom:0;">
-      Buen trabajo. Intenta incrementar gradualmente tu frecuencia de entrenamiento
-      para alcanzar tus objetivos más rápido.
-    </p>
-  {% elif dias_activos > 0 %}
-    <p style="color:#15803d;margin-bottom:0;">
-      Estás empezando bien. Trata de establecer una rutina más consistente,
-      apuntando a al menos 3-4 días de actividad por semana.
-    </p>
-  {% else %}
-    <p style="color:#15803d;margin-bottom:0;">
-      No has registrado actividad este mes. ¡Es momento de comenzar!
-      Establece metas pequeñas y alcanzables para mantener la motivación.
-    </p>
+  <!-- Sugerencias -->
+  <div class="card" style="background:#f0fdf4;border:2px solid #86efac;margin-bottom:1.5rem;">
+    <h3 style="color:#166534;margin:0 0 1rem 0;">💡 Sugerencias</h3>
+    {% if mejor_semana %}
+      <p style="color:#15803d;margin:0 0 0.5rem 0;">
+        <strong>Tu mejor semana fue la Semana {{ mejor_semana.0 }}</strong> con {{ mejor_semana.1 }} sesiones.
+        Intenta replicar ese ritmo para mantener la consistencia.
+      </p>
+    {% endif %}
+    {% if dias_activos >= 15 %}
+      <p style="color:#15803d;margin:0 0 0.5rem 0;">
+        ¡Excelente adherencia! Estás manteniendo una rutina muy consistente. Continúa así para maximizar tus resultados.
+      </p>
+    {% elif dias_activos >= 8 %}
+      <p style="color:#15803d;margin:0 0 0.5rem 0;">
+        Buen trabajo. Intenta incrementar gradualmente tu frecuencia de entrenamiento para alcanzar tus objetivos más rápido.
+      </p>
+    {% elif dias_activos > 0 %}
+      <p style="color:#15803d;margin:0 0 0.5rem 0;">
+        Estás empezando bien. Trata de establecer una rutina más consistente, apuntando a al menos 3-4 días de actividad por semana.
+      </p>
+    {% else %}
+      <p style="color:#15803d;margin:0;">
+        No has registrado actividad este mes. ¡Es momento de comenzar! Establece metas pequeñas y alcanzables para mantener la motivación.
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Rutinas más usadas -->
+  {% if rutinas_mas_usadas %}
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h3 style="margin:0 0 1rem 0;">⭐ Rutinas Más Utilizadas</h3>
+    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+      {% for rutina in rutinas_mas_usadas %}
+        <div style="padding:1rem;background:#f9fafb;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+          <strong style="color:#111827;">{{ rutina.routine__nombre }}</strong>
+          <span class="badge badge-primary">{{ rutina.veces }} vez{{ rutina.veces|pluralize:"es" }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
   {% endif %}
-</div>
 
-<!-- Rutinas más usadas -->
-{% if rutinas_mas_usadas %}
-<div class="card" style="margin-top:1.5rem;">
-  <h3>⭐ Rutinas Más Utilizadas</h3>
-  <ul>
-    {% for rutina in rutinas_mas_usadas %}
-      <li style="padding:0.5rem 0;border-bottom:1px solid #e5e7eb;">
-        <strong>{{ rutina.routine__nombre }}</strong> - {{ rutina.veces }} vez{{ rutina.veces|pluralize:"es" }}
-      </li>
-    {% endfor %}
-  </ul>
-</div>
-{% endif %}
-
-<!-- Navegación a otros reportes -->
-<div style="margin-top:2rem;text-align:center;">
-  <a href="{% url 'report_load_balance' %}" class="btn">Ver Informe de Carga →</a>
-  <a href="{% url 'report_progress_trend' %}" class="btn" style="margin-left:0.5rem;">Ver Tendencias →</a>
-  <a href="{% url 'report_achievements' %}" class="btn" style="margin-left:0.5rem;">Ver Logros →</a>
-  <a href="{% url 'home' %}" class="action-link" style="margin-left:1rem;">Volver al Dashboard</a>
+  <!-- Navegación -->
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2rem;">
+    <a href="{% url 'report_progress' %}" class="btn">📊 Ver Informe de Progreso</a>
+    <a href="{% url 'report_progress_trend' %}" class="btn">📈 Ver Tendencias</a>
+    <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+  </div>
 </div>
 {% endblock %}

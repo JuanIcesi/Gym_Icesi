@@ -1,0 +1,196 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gym Icesi - Bienestar Universitario</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <style>
+    .hero-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0b74de 0%, #4a7c59 100%);
+      padding: 2rem;
+    }
+    .hero-content {
+      text-align: center;
+      max-width: 900px;
+      color: white;
+    }
+    .hero-content h1 {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    .hero-content p {
+      font-size: 1.3rem;
+      margin-bottom: 3rem;
+      color: rgba(255,255,255,0.95);
+    }
+    .role-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    .role-card {
+      background: white;
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .role-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+    }
+    .role-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .role-card h2 {
+      color: #10314a;
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+    }
+    .role-card p {
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.7;
+    }
+    .role-features {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0;
+      text-align: left;
+    }
+    .role-features li {
+      padding: 0.5rem 0;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .role-features li:before {
+      content: "✓";
+      color: var(--success);
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .btn-login {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-top: 1rem;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(11,116,222,0.3);
+    }
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(11,116,222,0.4);
+    }
+    .demo-info {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-top: 3rem;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .demo-info h3 {
+      color: white;
+      margin-bottom: 1rem;
+    }
+    .demo-info p {
+      color: rgba(255,255,255,0.9);
+      margin: 0.5rem 0;
+    }
+    @media (max-width: 768px) {
+      .hero-content h1 {
+        font-size: 2.5rem;
+      }
+      .role-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero-section">
+    <div class="hero-content">
+      <div style="font-size: 5rem; margin-bottom: 1rem;">💪</div>
+      <h1>Gym Icesi</h1>
+      <p>Bienestar Universitario - Sistema de Gestión de Entrenamiento</p>
+      
+      <div class="role-cards">
+        <!-- Usuario Estándar -->
+        <a href="{% url 'login' %}" class="role-card">
+          <span class="role-icon">👤</span>
+          <h2>Usuario Estándar</h2>
+          <p>Estudiantes y colaboradores</p>
+          <ul class="role-features">
+            <li>Ver y crear rutinas personalizadas</li>
+            <li>Adoptar rutinas prediseñadas</li>
+            <li>Registrar progreso de entrenamiento</li>
+            <li>Ver informes de progreso y adherencia</li>
+            <li>Consultar ejercicios disponibles</li>
+          </ul>
+          <span class="btn-login">Iniciar Sesión</span>
+        </a>
+
+        <!-- Entrenador -->
+        <a href="{% url 'login' %}" class="role-card">
+          <span class="role-icon">🏋️</span>
+          <h2>Entrenador</h2>
+          <p>Instructores y empleados</p>
+          <ul class="role-features">
+            <li>Crear rutinas prediseñadas</li>
+            <li>Crear ejercicios para el sistema</li>
+            <li>Ver usuarios asignados</li>
+            <li>Revisar progreso de usuarios</li>
+            <li>Dar recomendaciones y feedback</li>
+          </ul>
+          <span class="btn-login">Iniciar Sesión</span>
+        </a>
+
+        <!-- Administrador -->
+        <a href="{% url 'login' %}" class="role-card">
+          <span class="role-icon">⚙️</span>
+          <h2>Administrador</h2>
+          <p>Jefe de Bienestar / Coordinador</p>
+          <ul class="role-features">
+            <li>Ver lista de entrenadores</li>
+            <li>Asignar entrenadores a usuarios</li>
+            <li>Consultar estadísticas globales</li>
+            <li>Ver usuarios activos</li>
+            <li>Gestionar el sistema</li>
+          </ul>
+          <span class="btn-login">Iniciar Sesión</span>
+        </a>
+      </div>
+
+      <div class="demo-info">
+        <h3>ℹ️ Información de Acceso</h3>
+        <p><strong>Nota:</strong> Todos los roles utilizan el mismo formulario de login.</p>
+        <p>El sistema identifica automáticamente tu rol según tu cuenta institucional.</p>
+        <p>Las credenciales se validan contra la base de datos institucional.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

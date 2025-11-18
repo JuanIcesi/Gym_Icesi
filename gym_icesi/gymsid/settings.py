@@ -74,6 +74,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "fit.context_processors.nav_trainers",
+                "fit.context_processors.user_context",
             ],
         },
     }
@@ -99,6 +100,7 @@ if "sqlite" not in DB_ENGINE:
         "PORT": os.getenv("DB_PORT", "5432"),
         "OPTIONS": {
             "options": "-c client_encoding=UTF8",
+            "sslmode": "require",  # Neon requiere SSL
         },
     })
 
@@ -142,7 +144,7 @@ STORAGES = {
 # ----------------------------------------------------
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
-LOGOUT_REDIRECT_URL = "login"
+LOGOUT_REDIRECT_URL = "index"
 
 # ----------------------------------------------------
 # Clave primaria por defecto
@@ -152,9 +154,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ----------------------------------------------------
 # Backends de autenticación
 # ----------------------------------------------------
+# IMPORTANTE: InstitutionalBackend debe ir PRIMERO para que se use antes que ModelBackend
 AUTHENTICATION_BACKENDS = [
     "fit.auth_backend.InstitutionalBackend",
-    "django.contrib.auth.backends.ModelBackend",
+    "django.contrib.auth.backends.ModelBackend",  # Fallback para usuarios Django normales
 ]
 
 # ----------------------------------------------------
@@ -168,7 +171,17 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
-        "level": "WARNING",
+        "level": "INFO",
+    },
+    "loggers": {
+        "fit.auth_backend": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+        },
+        "fit.auth_views": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+        },
     },
 }
 

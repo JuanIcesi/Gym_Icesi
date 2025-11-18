@@ -3,8 +3,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Dashboard
-    path("", views.home, name="home"),
+    # Página de inicio / selección de login
+    path("", views.index, name="index"),
+    # Dashboard (redirige según rol)
+    path("home/", views.home, name="home"),
 
     # Rutinas
     path("rutinas/", views.routine_list, name="routine_list"),
@@ -15,6 +17,7 @@ urlpatterns = [
 
     # Progreso
     path("progreso/nuevo/", views.progress_create, name="progress_create"),
+    path("progreso/", views.progress_list, name="progress_list"),
 
     # Módulo entrenador (para entrenadores internos)
     path("trainer/asignados/", views.trainer_assignees, name="trainer_assignees"),
@@ -26,6 +29,8 @@ urlpatterns = [
     path("trainer/recomendacion/<int:user_id>/", views.trainer_recommendation_create, name="trainer_recommendation_create"),
 
     # Ejercicios (usuarios)
+    path("ejercicios/", views.exercises_list, name="exercises_list"),
+    path("ejercicios/<int:pk>/", views.exercise_detail, name="exercise_detail"),
     path("ejercicios/nuevo/", views.exercise_create, name="exercise_create"),
 
     # Recomendaciones (usuarios)
@@ -37,6 +42,7 @@ urlpatterns = [
     path("entrenadores/<str:emp_id>/", views.trainer_detail, name="trainer_detail"),
 
     # Reportes
+    path("reportes/progreso/", views.report_progress, name="report_progress"),
     path("reportes/adherencia/", views.report_adherence, name="report_adherence"),
     path("reportes/carga/", views.report_load_balance, name="report_load_balance"),
     path("reportes/tendencias/", views.report_progress_trend, name="report_progress_trend"),

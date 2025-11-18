@@ -4,97 +4,162 @@
 {% block content %}
 <div style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
   <div>
-    <h1>📋 Mis Rutinas</h1>
-    <p>Gestiona tus rutinas personalizadas y explora rutinas prediseñadas por entrenadores.</p>
+    <h1 style="margin:0;">📋 Mis Rutinas</h1>
+    <p style="color:#6b7280;margin:0.5rem 0 0 0;">Gestiona tus rutinas personalizadas y explora rutinas prediseñadas por entrenadores.</p>
   </div>
-  <div style="display:flex;gap:1rem;">
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;">
     <a href="{% url 'routine_create' %}" class="btn btn-success">➕ Nueva Rutina</a>
-    <a href="{% url 'exercise_create' %}" class="btn">💪 Crear Ejercicio Personalizado</a>
+    <a href="{% url 'exercises_list' %}" class="btn">💪 Ver Ejercicios</a>
   </div>
 </div>
 
 <div class="row">
-	<!-- Mis Rutinas Personales -->
-	<div class="col">
-		<div class="card">
-			<h2>🏋️ Mis Rutinas Personales</h2>
-			{% if routines %}
-				<ul class="routine-list">
-					{% for r in routines %}
-						<li>
-							<div class="routine-item-info">
-								<div class="routine-item-title">
-									<a href="{% url 'routine_detail' r.pk %}" class="action-link">{{ r.nombre }}</a>
-								</div>
-								<div class="routine-item-meta">
-									Creada: {{ r.fecha_creacion|date:"d M Y" }}
-									{% if r.items.count %}
-										| {{ r.items.count }} ejercicio{{ r.items.count|pluralize }}
-									{% endif %}
-								</div>
-							</div>
-							<div class="routine-item-actions">
-								<a href="{% url 'routine_detail' r.pk %}" class="btn btn-sm">Ver detalles →</a>
-							</div>
-						</li>
-					{% endfor %}
-				</ul>
-			{% else %}
-				<div class="empty-state">
-					<div class="empty-state-icon">📝</div>
-					<p>No tienes rutinas personales aún.</p>
-					<p style="font-size:0.9rem;">Crea tu primera rutina o adopta una prediseñada.</p>
-					<a href="{% url 'routine_create' %}" class="btn">Crear Mi Primera Rutina</a>
-				</div>
-			{% endif %}
-		</div>
-	</div>
+  <!-- Mis Rutinas Personales -->
+  <div class="col">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <h2 style="margin:0;">🏋️ Mis Rutinas Personales</h2>
+        <span class="badge badge-primary">{{ routines|length }}</span>
+      </div>
+      
+      {% if routines %}
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          {% for item in routines %}
+            {% with r=item.routine %}
+            <div style="padding:1.25rem;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;transition:all 0.3s;" onmouseover="this.style.borderColor='#0b74de';this.style.boxShadow='0 2px 8px rgba(11,116,222,0.1)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+                <div style="flex:1;">
+                  <h4 style="margin:0 0 0.5rem 0;">
+                    <a href="{% url 'routine_detail' r.pk %}" style="text-decoration:none;color:#111827;font-weight:600;">
+                      {{ r.nombre }}
+                    </a>
+                  </h4>
+                  {% if r.descripcion %}
+                    <p style="color:#6b7280;font-size:0.9rem;margin:0 0 0.5rem 0;">
+                      {{ r.descripcion|truncatewords:15 }}
+                    </p>
+                  {% endif %}
+                </div>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                  {% if item.estado == "activa" %}
+                    <span class="badge badge-success" style="font-size:0.75rem;">Activa</span>
+                  {% elif item.estado == "pausada" %}
+                    <span class="badge" style="background:#fef3c7;color:#92400e;font-size:0.75rem;">Pausada</span>
+                  {% endif %}
+                  {% if r.es_predisenada %}
+                    <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:0.75rem;">Prediseñada</span>
+                  {% else %}
+                    <span class="badge" style="background:#f3f4f6;color:#6b7280;font-size:0.75rem;">Personalizada</span>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;color:#6b7280;font-size:0.85rem;">
+                  <span>📅 Creada: {{ r.fecha_creacion|date:"d M Y" }}</span>
+                  {% if item.ultima_sesion %}
+                    <span>🔥 Última sesión: {{ item.ultima_sesion.fecha|date:"d M Y" }}</span>
+                  {% else %}
+                    <span style="color:#9ca3af;">Nunca entrenada</span>
+                  {% endif %}
+                  <span>💪 {{ item.total_ejercicios }} ejercicio{{ item.total_ejercicios|pluralize }}</span>
+                </div>
+              </div>
+              
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <a href="{% url 'routine_detail' r.pk %}" class="btn btn-sm">Ver Detalles</a>
+                <a href="{% url 'progress_create' %}?routine={{ r.pk }}" class="btn btn-sm btn-success">✅ Registrar Progreso</a>
+              </div>
+            </div>
+            {% endwith %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">📝</div>
+          <p>No tienes rutinas personales aún.</p>
+          <p style="font-size:0.9rem;color:#6b7280;">Crea tu primera rutina o adopta una prediseñada.</p>
+          <a href="{% url 'routine_create' %}" class="btn">Crear Mi Primera Rutina</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
 
-	<!-- Rutinas Prediseñadas -->
-	<div class="col">
-		<div class="card" style="background:linear-gradient(135deg, #f8fafc 0%, #e6f2ff 100%);">
-			<h3>⭐ Rutinas Prediseñadas</h3>
-			<p style="font-size:0.9rem;color:var(--muted);margin-bottom:1rem;">
-				Rutinas creadas por entrenadores certificados. Adóptalas y personalízalas.
-			</p>
-			{% if presets %}
-				<ul class="exercise-list">
-					{% for r in presets %}
-						<li style="background:white;">
-							<div class="routine-item-info">
-								<div class="routine-item-title">{{ r.nombre }}</div>
-								<div class="routine-item-meta">
-									{% if r.autor_trainer %}
-										Por: {{ r.autor_trainer.first_name }} {{ r.autor_trainer.last_name }}
-									{% endif %}
-									{% if r.items.count %}
-										| {{ r.items.count }} ejercicio{{ r.items.count|pluralize }}
-									{% endif %}
-								</div>
-							</div>
-							<div class="routine-item-actions">
-								<a href="{% url 'routine_adopt' r.pk %}" class="btn btn-sm btn-success">✓ Adoptar</a>
-								<a href="{% url 'routine_detail' r.pk %}" class="action-link" style="font-size:0.9rem;">Ver</a>
-							</div>
-						</li>
-					{% endfor %}
-				</ul>
-			{% else %}
-				<div class="empty-state">
-					<div class="empty-state-icon">🔍</div>
-					<p>No hay rutinas prediseñadas disponibles aún.</p>
-				</div>
-			{% endif %}
-		</div>
-	</div>
+  <!-- Rutinas Prediseñadas -->
+  <div class="col">
+    <div class="card" style="background:linear-gradient(135deg, #f8fafc 0%, #e6f2ff 100%);border:2px solid #bfdbfe;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="margin:0;">⭐ Rutinas Prediseñadas</h3>
+        <span class="badge badge-primary">{{ presets|length }}</span>
+      </div>
+      <p style="font-size:0.9rem;color:#6b7280;margin-bottom:1.5rem;">
+        Rutinas creadas por entrenadores certificados. Adóptalas y personalízalas según tus necesidades.
+      </p>
+      
+      {% if presets %}
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          {% for item in presets %}
+            {% with r=item.routine %}
+            <div style="padding:1.25rem;background:white;border-radius:8px;border:1px solid #e5e7eb;">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+                <div style="flex:1;">
+                  <h4 style="margin:0 0 0.5rem 0;">
+                    <a href="{% url 'routine_detail' r.pk %}" style="text-decoration:none;color:#111827;font-weight:600;">
+                      {{ r.nombre }}
+                    </a>
+                  </h4>
+                  {% if r.descripcion %}
+                    <p style="color:#6b7280;font-size:0.9rem;margin:0 0 0.5rem 0;">
+                      {{ r.descripcion|truncatewords:12 }}
+                    </p>
+                  {% endif %}
+                  {% if item.trainer_info %}
+                    <p style="color:#6b7280;font-size:0.85rem;margin:0;">
+                      👤 Por: {{ item.trainer_info.first_name|default:"" }} {{ item.trainer_info.last_name|default:r.autor_trainer.username }}
+                    </p>
+                  {% elif r.autor_trainer %}
+                    <p style="color:#6b7280;font-size:0.85rem;margin:0;">
+                      👤 Por: {{ r.autor_trainer.username }}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                <span style="color:#6b7280;font-size:0.85rem;">
+                  💪 {{ item.total_ejercicios }} ejercicio{{ item.total_ejercicios|pluralize }}
+                </span>
+              </div>
+              
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <a href="{% url 'routine_adopt' r.pk %}" class="btn btn-sm btn-success" style="flex:1;">
+                  ✓ Adoptar Rutina
+                </a>
+                <a href="{% url 'routine_detail' r.pk %}" class="btn btn-sm" style="flex:1;">
+                  Ver Detalles
+                </a>
+              </div>
+            </div>
+            {% endwith %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          <p>No hay rutinas prediseñadas disponibles aún.</p>
+          <p style="font-size:0.9rem;color:#6b7280;">Los entrenadores pueden crear rutinas prediseñadas para que las adoptes.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 <!-- Info Card -->
-<div class="card" style="background:#fffbeb;border-color:#fef3c7;margin-top:1.5rem;">
-	<h3 style="color:#92400e;">💡 ¿Sabías que...?</h3>
-	<p style="color:#78350f;margin-bottom:0;">
-		Puedes adoptar rutinas prediseñadas por entrenadores y luego personalizarlas según tus necesidades.
-		¡Cada rutina adoptada se convierte en tu propia copia editable!
-	</p>
+<div class="card" style="background:#fffbeb;border:2px solid #fde68a;margin-top:1.5rem;">
+  <h3 style="color:#92400e;margin:0 0 0.5rem 0;">💡 ¿Sabías que...?</h3>
+  <p style="color:#78350f;margin:0;">
+    Puedes adoptar rutinas prediseñadas por entrenadores y luego personalizarlas según tus necesidades.
+    ¡Cada rutina adoptada se convierte en tu propia copia editable!
+  </p>
 </div>
 {% endblock %}

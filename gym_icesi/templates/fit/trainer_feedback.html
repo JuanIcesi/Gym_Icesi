@@ -3,96 +3,166 @@
 
 {% block content %}
 <div style="margin-bottom:1.5rem;">
-  <a href="{% url 'trainer_assignees' %}" class="action-link">← Volver a mis asignados</a>
+  <a href="{% url 'trainer_assignees' %}" class="btn btn-secondary">← Volver a Mis Asignados</a>
 </div>
 
-<div class="card">
-  <h2>👤 Seguimiento de {{ tuser.username }}</h2>
-  
-  {% if not assignment %}
-    <div class="alert alert-warning">
-      ⚠️ Este usuario no está asignado a ti actualmente.
-    </div>
-  {% endif %}
-
-  <div class="row" style="margin-top:2rem;">
-    <!-- Progreso Reciente -->
-    <div class="col">
-      <div class="card">
-        <h3>📊 Progreso Reciente</h3>
-        {% if progress %}
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Rutina</th>
-                <th>Esfuerzo</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for p in progress %}
-                <tr>
-                  <td>{{ p.fecha|date:"d/m/Y" }}</td>
-                  <td>{{ p.routine.nombre }}</td>
-                  <td>{{ p.esfuerzo }}/10</td>
-                  <td>
-                    <a href="{% url 'trainer_recommendation_create' tuser.pk %}?progress_id={{ p.pk }}" class="btn btn-sm btn-primary">
-                      💬 Recomendar
-                    </a>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <p class="muted">No hay registros de progreso aún.</p>
+<div class="card" style="margin-bottom:1.5rem;">
+  <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+    <div style="flex:1;">
+      <h1 style="margin:0 0 0.5rem 0;">
+        {{ user_info.first_name|default:"" }} {{ user_info.last_name|default:tuser.username }}
+      </h1>
+      <div style="color:#6b7280;font-size:0.9rem;">
+        {% if user_info.campus %}
+          📍 {{ user_info.campus }}
+        {% endif %}
+        {% if user_info.role == 'STUDENT' %}
+          | 🎓 Estudiante
         {% endif %}
       </div>
     </div>
+    <a href="{% url 'trainer_recommendation_create' tuser.pk %}" class="btn btn-success">
+      💬 Enviar Recomendación
+    </a>
+  </div>
 
-    <!-- Rutinas -->
-    <div class="col">
-      <div class="card">
-        <h3>📋 Rutinas del Usuario</h3>
-        {% if routines %}
-          <ul class="routine-list">
-            {% for r in routines %}
-              <li style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem;border-bottom:1px solid #e5e7eb;">
-                <div>
-                  <strong>{{ r.nombre }}</strong>
-                  <br>
-                  <small class="muted">{{ r.items.count }} ejercicio(s)</small>
-                </div>
-                <div>
-                  <a href="{% url 'routine_detail' r.pk %}" class="btn btn-sm">Ver</a>
-                  <a href="{% url 'trainer_recommendation_create' tuser.pk %}?routine_id={{ r.pk }}" class="btn btn-sm btn-primary">
-                    💬 Recomendar
-                  </a>
-                </div>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="muted">No hay rutinas creadas aún.</p>
-        {% endif %}
-      </div>
+  <!-- Resumen -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:1rem;margin-bottom:1.5rem;">
+    <div style="padding:1rem;background:#f9fafb;border-radius:8px;text-align:center;">
+      <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Rutinas Activas</div>
+      <div style="font-size:2rem;font-weight:bold;color:#111827;">{{ rutinas_activas }}</div>
+    </div>
+    <div style="padding:1rem;background:#f9fafb;border-radius:8px;text-align:center;">
+      <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Sesiones Este Mes</div>
+      <div style="font-size:2rem;font-weight:bold;color:#111827;">{{ sesiones_mes }}</div>
+    </div>
+    <div style="padding:1rem;background:#f9fafb;border-radius:8px;text-align:center;">
+      <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Asignado Desde</div>
+      <div style="font-size:1.25rem;font-weight:bold;color:#111827;">{{ assignment.fecha_asignacion|date:"d M Y" }}</div>
     </div>
   </div>
 
-  <!-- Recomendaciones Enviadas -->
-  {% if recommendations %}
-    <div class="card" style="margin-top:2rem;">
-      <h3>💬 Recomendaciones Enviadas</h3>
-      <ul>
-        {% for rec in recommendations %}
-          <li style="padding:0.5rem 0;border-bottom:1px solid #e5e7eb;">
-            <strong>{{ rec.fecha|date:"d/m/Y H:i" }}</strong>
-            <p style="margin:0.25rem 0;">{{ rec.mensaje|truncatewords:20 }}</p>
-          </li>
-        {% endfor %}
-      </ul>
+  <!-- Tendencia de actividad -->
+  {% if tendencia %}
+  <div style="padding:1rem;background:#f0fdf4;border-radius:8px;border-left:4px solid #10b981;margin-bottom:1.5rem;">
+    <h4 style="margin:0 0 0.75rem 0;color:#065f46;">📈 Tendencia de Actividad (Últimos 3 meses)</h4>
+    <div style="display:flex;gap:1rem;align-items:end;">
+      {% for item in tendencia %}
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:1.5rem;font-weight:bold;color:#065f46;margin-bottom:0.25rem;">{{ item.sesiones }}</div>
+          <div style="font-size:0.85rem;color:#166534;">{{ item.mes }}</div>
+        </div>
+      {% endfor %}
     </div>
+  </div>
   {% endif %}
 </div>
+
+<div class="row" style="margin-bottom:1.5rem;">
+  <!-- Progreso Reciente -->
+  <div class="col">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="margin:0;">📊 Progreso Reciente</h3>
+      </div>
+      
+      {% if progress %}
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          {% for p in progress %}
+            <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid #0b74de;">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+                <div style="flex:1;">
+                  <strong style="color:#111827;">{{ p.routine.nombre }}</strong>
+                  <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+                    📅 {{ p.fecha|date:"d M Y" }}
+                  </div>
+                </div>
+                <span class="badge badge-primary" style="font-size:0.85rem;">Esfuerzo: {{ p.esfuerzo }}/10</span>
+              </div>
+              {% if p.tiempo_seg %}
+                <div style="color:#6b7280;font-size:0.85rem;">
+                  ⏱️ {{ p.tiempo_seg }} segundos
+                </div>
+              {% endif %}
+              {% if p.notas %}
+                <div style="color:#374151;font-size:0.9rem;margin-top:0.5rem;padding:0.5rem;background:white;border-radius:4px;">
+                  📝 {{ p.notas|truncatewords:15 }}
+                </div>
+              {% endif %}
+              <div style="margin-top:0.75rem;">
+                <a href="{% url 'trainer_recommendation_create' tuser.pk %}?progress_id={{ p.pk }}" class="btn btn-sm btn-success">
+                  💬 Enviar Recomendación
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <p>No hay registros de progreso aún.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Rutinas del Usuario -->
+  <div class="col">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="margin:0;">📋 Rutinas del Usuario</h3>
+      </div>
+      
+      {% if routines %}
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          {% for r in routines %}
+            <div style="padding:1rem;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+                <div style="flex:1;">
+                  <strong style="color:#111827;">{{ r.nombre }}</strong>
+                  <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+                    💪 {{ r.items.count }} ejercicio{{ r.items.count|pluralize }}
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:0.5rem;">
+                <a href="{% url 'routine_detail' r.pk %}" class="btn btn-sm">Ver Detalles</a>
+                <a href="{% url 'trainer_recommendation_create' tuser.pk %}?routine_id={{ r.pk }}" class="btn btn-sm btn-success">
+                  💬 Recomendar
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <p>No hay rutinas creadas aún.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Recomendaciones Enviadas -->
+{% if recommendations %}
+<div class="card" style="margin-bottom:1.5rem;">
+  <h3 style="margin:0 0 1rem 0;">💬 Recomendaciones Enviadas</h3>
+  <div style="display:flex;flex-direction:column;gap:1rem;">
+    {% for rec in recommendations %}
+      <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid #10b981;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+          <strong style="color:#111827;">{{ rec.fecha|date:"d M Y H:i" }}</strong>
+          {% if rec.leido %}
+            <span class="badge badge-success" style="font-size:0.75rem;">Leída</span>
+          {% else %}
+            <span class="badge" style="background:#fef3c7;color:#92400e;font-size:0.75rem;">No leída</span>
+          {% endif %}
+        </div>
+        <p style="color:#374151;margin:0;line-height:1.5;">{{ rec.mensaje|linebreaks }}</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
 {% endblock %}

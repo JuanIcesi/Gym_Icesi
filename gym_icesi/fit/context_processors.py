@@ -1,5 +1,6 @@
 # fit/context_processors.py
 from django.db import connection
+from .models import TrainerAssignment
 
 def nav_trainers(request):
     """
@@ -22,3 +23,17 @@ def nav_trainers(request):
             # Si falla (por ejemplo, usando SQLite sin BD institucional), continuar sin trainers
             pass
     return {"nav_trainers": trainers}
+
+
+def user_context(request):
+    """
+    Contexto global para usuarios autenticados
+    """
+    context = {}
+    if request.user.is_authenticated:
+        # Verificar si el usuario tiene entrenador asignado
+        has_trainer = TrainerAssignment.objects.filter(
+            user=request.user, activo=True
+        ).exists()
+        context["has_trainer"] = has_trainer
+    return context

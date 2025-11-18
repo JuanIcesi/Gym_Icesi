@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Informe de Progreso Mensual - Gym Icesi{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:2rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+    <div>
+      <h1 style="margin:0;">📊 Informe de Progreso Mensual</h1>
+      <p style="color:#6b7280;margin:0.5rem 0 0 0;">Análisis detallado de tu actividad física</p>
+    </div>
+  </div>
+
+  <!-- Selector de mes/año -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <form method="get" style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;">
+      <div style="flex:1;min-width:150px;">
+        <label for="month" style="display:block;margin-bottom:0.5rem;font-weight:500;">Mes:</label>
+        <select name="month" id="month" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          {% for i in "123456789101112"|make_list %}
+            <option value="{{ i }}" {% if month == i|add:0 %}selected{% endif %}>
+              {% if i == "1" %}Enero{% elif i == "2" %}Febrero{% elif i == "3" %}Marzo{% elif i == "4" %}Abril{% elif i == "5" %}Mayo{% elif i == "6" %}Junio{% elif i == "7" %}Julio{% elif i == "8" %}Agosto{% elif i == "9" %}Septiembre{% elif i == "10" %}Octubre{% elif i == "11" %}Noviembre{% elif i == "12" %}Diciembre{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <label for="year" style="display:block;margin-bottom:0.5rem;font-weight:500;">Año:</label>
+        <input type="number" name="year" id="year" value="{{ year }}" min="2020" max="{% now 'Y' %}" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+      </div>
+      <div>
+        <button type="submit" class="btn">Ver Informe</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Indicadores principales -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:2rem;">
+    <div class="card" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Número de Sesiones</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ total_sesiones }}</div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Tiempo Total</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ total_tiempo_horas|floatformat:1 }}h</div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Rutinas Diferentes</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ rutinas_usadas }}</div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);color:white;padding:1.5rem;">
+      <div style="font-size:0.9rem;opacity:0.9;margin-bottom:0.5rem;">Días Activos</div>
+      <div style="font-size:2.5rem;font-weight:bold;">{{ dias_activos }}</div>
+    </div>
+  </div>
+
+  <!-- Gráfica de barras: Sesiones por semana -->
+  {% if sesiones_por_semana %}
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h3 style="margin:0 0 1rem 0;">📈 Sesiones por Semana del Mes</h3>
+    <div style="display:flex;align-items:end;gap:0.5rem;height:200px;padding:1rem;background:#f9fafb;border-radius:8px;">
+      {% for semana_num, sesiones in sesiones_por_semana.items %}
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+          <div style="width:100%;background:linear-gradient(180deg, #0b74de 0%, #4a7c59 100%);border-radius:4px 4px 0 0;min-height:20px;height:{% widthratio sesiones 10 180 %}px;display:flex;align-items:end;justify-content:center;color:white;font-weight:bold;padding:0.5rem;">
+            {% if sesiones > 0 %}{{ sesiones }}{% endif %}
+          </div>
+          <div style="font-size:0.85rem;color:#6b7280;font-weight:500;">Sem {{ semana_num }}</div>
+        </div>
+      {% endfor %}
+      {% for semana in "1234"|make_list %}
+        {% with semana_num=semana|add:0 %}
+          {% if not semana_num in sesiones_por_semana.keys %}
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+              <div style="width:100%;background:#e5e7eb;border-radius:4px 4px 0 0;min-height:20px;height:20px;"></div>
+              <div style="font-size:0.85rem;color:#6b7280;font-weight:500;">Sem {{ semana_num }}</div>
+            </div>
+          {% endif %}
+        {% endwith %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Gráfica de pastel: Distribución por tipo -->
+  {% if distribucion_tipo %}
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h3 style="margin:0 0 1rem 0;">🥧 Distribución por Tipo de Ejercicio</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;">
+      {% for tipo, cantidad in distribucion_tipo.items %}
+        <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid {% if tipo == 'cardio' %}#ef4444{% elif tipo == 'fuerza' %}#3b82f6{% else %}#10b981{% endif %};">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <span class="badge badge-{{ tipo }}" style="font-size:0.9rem;">
+              {% if tipo == 'cardio' %}🏃 Cardio
+              {% elif tipo == 'fuerza' %}💪 Fuerza
+              {% elif tipo == 'movilidad' %}🧘 Movilidad
+              {% else %}{{ tipo|title }}
+              {% endif %}
+            </span>
+            <strong style="font-size:1.5rem;color:#111827;">{{ cantidad }}</strong>
+          </div>
+          <div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden;">
+            <div style="height:100%;background:{% if tipo == 'cardio' %}#ef4444{% elif tipo == 'fuerza' %}#3b82f6{% else %}#10b981{% endif %};width:{% widthratio cantidad total_sesiones 100 %}%;"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Lista de hitos -->
+  {% if hitos %}
+  <div class="card" style="background:#fffbeb;border:2px solid #fde68a;margin-bottom:1.5rem;">
+    <h3 style="color:#92400e;margin:0 0 1rem 0;">🏆 Hitos del Mes</h3>
+    <ul style="margin:0;padding-left:1.5rem;color:#78350f;">
+      {% for hito in hitos %}
+        <li style="margin-bottom:0.5rem;">{{ hito }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Navegación -->
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2rem;">
+    <a href="{% url 'report_adherence' %}" class="btn">📊 Ver Informe de Adherencia</a>
+    <a href="{% url 'report_progress_trend' %}" class="btn">📈 Ver Tendencias</a>
+    <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+  </div>
+</div>
+{% endblock %}
+

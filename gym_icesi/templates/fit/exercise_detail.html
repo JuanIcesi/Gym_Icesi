@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}{{ exercise.nombre }} - Gym Icesi{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="margin-bottom:1.5rem;">
+    <a href="{% url 'exercises_list' %}" class="btn btn-secondary" style="margin-bottom:1rem;">← Volver a Ejercicios</a>
+    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <h1 style="margin:0 0 0.5rem 0;">{{ exercise.nombre }}</h1>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+          <span class="badge badge-{{ exercise.tipo }}" style="font-size:0.9rem;">{{ exercise.get_tipo_display }}</span>
+          {% if exercise.dificultad %}
+            <span class="badge" style="background:#fef3c7;color:#92400e;font-size:0.9rem;">
+              ⭐ Dificultad: {{ exercise.dificultad }}/5
+            </span>
+          {% endif %}
+          {% if exercise.duracion_min %}
+            <span class="badge badge-primary" style="font-size:0.9rem;">
+              ⏱️ {{ exercise.duracion_min }} minutos
+            </span>
+          {% endif %}
+          {% if exercise.es_personalizado and exercise.creado_por %}
+            <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:0.9rem;">
+              🏋️ Creado por entrenador
+            </span>
+          {% else %}
+            <span class="badge" style="background:#f3f4f6;color:#6b7280;font-size:0.9rem;">
+              🏛️ Ejercicio institucional
+            </span>
+          {% endif %}
+        </div>
+      </div>
+      {% if user_routines %}
+        <button onclick="openAddToRoutineModal()" class="btn btn-success">
+          ➕ Agregar a una de mis rutinas
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if exercise.descripcion %}
+    <div style="margin:1.5rem 0;padding:1.5rem;background:#f9fafb;border-radius:8px;">
+      <h3 style="margin:0 0 1rem 0;">📝 Descripción</h3>
+      <p style="margin:0;line-height:1.6;color:#374151;">{{ exercise.descripcion|linebreaks }}</p>
+    </div>
+  {% endif %}
+
+  {% if exercise.video_url %}
+    <div style="margin:1.5rem 0;padding:1.5rem;background:#f9fafb;border-radius:8px;">
+      <h3 style="margin:0 0 1rem 0;">🎥 Video Demostrativo</h3>
+      <a href="{{ exercise.video_url }}" target="_blank" class="btn" style="display:inline-flex;align-items:center;gap:0.5rem;">
+        <span>▶️</span>
+        Ver Video en YouTube
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- Detalles extendidos de MongoDB -->
+  {% if mongo_details %}
+    <div style="margin-top:2rem;padding-top:2rem;border-top:2px solid #e5e7eb;">
+      <h3 style="margin-bottom:1.5rem;">📚 Información Adicional</h3>
+      
+      {% if mongo_details.variaciones %}
+        <div style="margin-bottom:1.5rem;">
+          <h4 style="margin:0 0 0.75rem 0;color:#374151;">🔄 Variaciones</h4>
+          <ul style="margin:0;padding-left:1.5rem;color:#6b7280;">
+            {% for variacion in mongo_details.variaciones %}
+              <li style="margin-bottom:0.5rem;">{{ variacion }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% if mongo_details.consejos %}
+        <div style="margin-bottom:1.5rem;">
+          <h4 style="margin:0 0 0.75rem 0;color:#374151;">💡 Consejos</h4>
+          <ul style="margin:0;padding-left:1.5rem;color:#6b7280;">
+            {% for consejo in mongo_details.consejos %}
+              <li style="margin-bottom:0.5rem;">{{ consejo }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% if mongo_details.musculos_trabajados %}
+        <div style="margin-bottom:1.5rem;">
+          <h4 style="margin:0 0 0.75rem 0;color:#374151;">💪 Músculos Trabajados</h4>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            {% for musculo in mongo_details.musculos_trabajados %}
+              <span class="badge badge-primary">{{ musculo }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if mongo_details.tags %}
+        <div style="margin-bottom:1.5rem;">
+          <h4 style="margin:0 0 0.75rem 0;color:#374151;">🏷️ Tags</h4>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            {% for tag in mongo_details.tags %}
+              <span class="badge badge-secondary">{{ tag }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div style="margin-top:2rem;padding-top:1.5rem;border-top:2px solid #e5e7eb;">
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+      {% if user_routines %}
+        <button onclick="openAddToRoutineModal()" class="btn btn-success">➕ Agregar a Rutina</button>
+      {% endif %}
+      <a href="{% url 'routine_create' %}" class="btn">📋 Usar en Nueva Rutina</a>
+      <a href="{% url 'exercises_list' %}" class="btn btn-secondary">📋 Ver Todos los Ejercicios</a>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para agregar ejercicio a rutina -->
+{% if user_routines %}
+<div id="addToRoutineModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div class="card" style="max-width:500px;width:90%;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h3 style="margin:0;">Agregar a Rutina</h3>
+      <button onclick="closeAddToRoutineModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;">&times;</button>
+    </div>
+    <p style="color:#6b7280;margin-bottom:1.5rem;">
+      Selecciona una rutina para agregar: <strong>{{ exercise.nombre }}</strong>
+    </p>
+    <form method="post" action="{% url 'routine_add_item' 0 %}" id="addToRoutineForm">
+      {% csrf_token %}
+      <input type="hidden" name="exercise_id" value="{{ exercise.pk }}">
+      <div style="margin-bottom:1rem;">
+        <label for="routineSelect" style="display:block;margin-bottom:0.5rem;font-weight:500;">Rutina:</label>
+        <select name="routine_id" id="routineSelect" required style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          <option value="">Selecciona una rutina...</option>
+          {% for routine in user_routines %}
+            <option value="{{ routine.pk }}">{{ routine.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <button type="submit" class="btn btn-success" style="flex:1;">Agregar</button>
+        <button type="button" onclick="closeAddToRoutineModal()" class="btn btn-secondary" style="flex:1;">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAddToRoutineModal() {
+  document.getElementById('addToRoutineModal').style.display = 'flex';
+}
+
+function closeAddToRoutineModal() {
+  document.getElementById('addToRoutineModal').style.display = 'none';
+  document.getElementById('routineSelect').value = '';
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('addToRoutineModal')?.addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeAddToRoutineModal();
+  }
+});
+
+// Actualizar action del form con el routine_id seleccionado
+document.getElementById('addToRoutineForm')?.addEventListener('submit', function(e) {
+  const routineId = document.getElementById('routineSelect').value;
+  if (routineId) {
+    this.action = this.action.replace('/0/', '/' + routineId + '/');
+  } else {
+    e.preventDefault();
+    alert('Por favor selecciona una rutina');
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

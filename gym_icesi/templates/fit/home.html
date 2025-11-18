@@ -2,57 +2,140 @@
 {% block title %}Dashboard - Gym Icesi{% endblock %}
 
 {% block content %}
-<div style="margin-bottom:2rem;">
-  <h1>Hola, {{ user.first_name|default:user.username }} 👋</h1>
-  <p>Bienvenido a tu panel de control fitness. Aquí puedes ver tu progreso y gestionar tus rutinas.</p>
+<!-- Encabezado con información institucional -->
+<div style="margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #e5e7eb;">
+  <h1 style="margin-bottom:0.5rem;">
+    Hola, {{ info.first_name|default:user.username }} 👋
+  </h1>
+  {% if info.campus or info.faculty %}
+    <p style="color:#6b7280;margin:0;">
+      {% if info.campus %}
+        <strong>Campus:</strong> {{ info.campus }}
+      {% endif %}
+      {% if info.faculty %}
+        <strong>Facultad:</strong> {{ info.faculty }}
+      {% endif %}
+      {% if info.role == 'STUDENT' and info.student_id %}
+        | <strong>Estudiante:</strong> {{ info.student_id }}
+      {% endif %}
+    </p>
+  {% endif %}
 </div>
 
-<!-- Stats Cards -->
-<div class="stats-grid">
-  <div class="stat-card">
-    <span class="stat-icon">📋</span>
-    <div class="stat-value">{{ total_routines }}</div>
-    <div class="stat-label">Rutinas Creadas</div>
+<!-- Tarjetas Resumen -->
+<div class="stats-grid" style="margin-bottom:2rem;">
+  <div class="stat-card" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;">
+    <span class="stat-icon" style="font-size:2.5rem;">📋</span>
+    <div class="stat-value" style="color:white;font-size:2.5rem;">{{ active_routines }}</div>
+    <div class="stat-label" style="color:rgba(255,255,255,0.9);">Rutinas Activas</div>
+    <a href="{% url 'routine_list' %}" class="btn btn-sm" style="margin-top:0.75rem;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;">Ver mis rutinas →</a>
   </div>
 
-  <div class="stat-card">
-    <span class="stat-icon">🔥</span>
-    <div class="stat-value">{{ total_sessions }}</div>
-    <div class="stat-label">Sesiones Total</div>
+  <div class="stat-card" style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%);color:white;">
+    <span class="stat-icon" style="font-size:2.5rem;">🔥</span>
+    <div class="stat-value" style="color:white;font-size:2.5rem;">{{ monthly_count }}</div>
+    <div class="stat-label" style="color:rgba(255,255,255,0.9);">Sesiones Este Mes</div>
+    <p style="margin:0.5rem 0 0 0;font-size:0.85rem;color:rgba(255,255,255,0.8);">{{ active_days }} días activos</p>
   </div>
 
-  <div class="stat-card">
-    <span class="stat-icon">📅</span>
-    <div class="stat-value">{{ active_days }}</div>
-    <div class="stat-label">Días Activos/Mes</div>
+  <div class="stat-card" style="background:linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);color:white;">
+    <span class="stat-icon" style="font-size:2.5rem;">⏱️</span>
+    <div class="stat-value" style="color:white;font-size:2.5rem;">{{ total_time_hours|floatformat:1 }}</div>
+    <div class="stat-label" style="color:rgba(255,255,255,0.9);">Horas Entrenadas</div>
+    <p style="margin:0.5rem 0 0 0;font-size:0.85rem;color:rgba(255,255,255,0.8);">Este mes</p>
   </div>
 
-  <div class="stat-card">
-    <span class="stat-icon">💪</span>
-    <div class="stat-value">{{ avg_effort }}</div>
-    <div class="stat-label">Esfuerzo Promedio</div>
+  <div class="stat-card" style="background:linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);color:white;">
+    <span class="stat-icon" style="font-size:2.5rem;">🏋️</span>
+    {% if trainer_name %}
+      <div class="stat-value" style="color:white;font-size:1.5rem;margin-bottom:0.25rem;">{{ trainer_name|truncatewords:2 }}</div>
+      <div class="stat-label" style="color:rgba(255,255,255,0.9);">Entrenador Asignado</div>
+      {% if trainer_assignment %}
+        <a href="{% url 'trainers_view' %}" class="btn btn-sm" style="margin-top:0.75rem;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;">Ver perfil →</a>
+      {% endif %}
+    {% else %}
+      <div class="stat-value" style="color:white;font-size:1.2rem;">Sin asignar</div>
+      <div class="stat-label" style="color:rgba(255,255,255,0.9);">Entrenador</div>
+      <p style="margin:0.5rem 0 0 0;font-size:0.85rem;color:rgba(255,255,255,0.8);">Contacta a un administrador</p>
+    {% endif %}
   </div>
 </div>
 
-<div class="row">
-  <!-- Mis Rutinas -->
+<!-- Últimas Actividades -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+    <h3 style="margin:0;">📊 Últimas Actividades</h3>
+    <a href="{% url 'progress_create' %}" class="btn btn-sm">Registrar nueva sesión →</a>
+  </div>
+  
+  {% if latest %}
+    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+      {% for log in latest %}
+        <div style="padding:1rem;background:#f9fafb;border-radius:8px;border-left:4px solid #0b74de;">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem;">
+            <div>
+              <strong style="color:#111827;">{{ log.routine.nombre }}</strong>
+              <span style="color:#6b7280;font-size:0.9rem;margin-left:0.5rem;">{{ log.fecha|date:"d M Y" }}</span>
+            </div>
+            <span class="badge badge-primary" style="font-size:0.85rem;">Esfuerzo: {{ log.esfuerzo }}/10</span>
+          </div>
+          <div style="color:#6b7280;font-size:0.9rem;">
+            {% if log.tiempo_seg %}
+              ⏱️ {{ log.tiempo_seg }} segundos
+            {% endif %}
+            {% if log.repeticiones %}
+              | 🔄 {{ log.repeticiones }} repeticiones
+            {% endif %}
+            {% if log.notas %}
+              | 📝 {{ log.notas|truncatewords:10 }}
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <p>No has registrado progreso aún. ¡Comienza tu primera sesión!</p>
+      <a href="{% url 'progress_create' %}" class="btn btn-success">Registrar Progreso</a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Mis Rutinas Recientes -->
+<div class="row" style="margin-bottom:1.5rem;">
   <div class="col">
     <div class="card">
-      <h3>📋 Mis Rutinas Recientes</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="margin:0;">📋 Mis Rutinas</h3>
+        <a href="{% url 'routine_list' %}" class="btn btn-sm">Ver todas →</a>
+      </div>
+      
       {% if my_routines %}
-        <ul class="routine-list">
+        <ul class="routine-list" style="list-style:none;padding:0;margin:0;">
           {% for routine in my_routines %}
-            <li>
-              <a href="{% url 'routine_detail' routine.pk %}" class="action-link">
-                {{ routine.nombre }}
-              </a>
-              {% if routine.es_predisenada %}
-                <span class="badge badge-success">Prediseñada</span>
-              {% endif %}
+            <li style="padding:0.75rem;background:#f9fafb;border-radius:6px;margin-bottom:0.5rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <a href="{% url 'routine_detail' routine.pk %}" class="action-link" style="font-weight:500;">
+                  {{ routine.nombre }}
+                </a>
+                <div>
+                  {% if routine.es_predisenada %}
+                    <span class="badge badge-success" style="font-size:0.75rem;">Prediseñada</span>
+                  {% else %}
+                    <span class="badge" style="font-size:0.75rem;background:#e5e7eb;color:#6b7280;">Personalizada</span>
+                  {% endif %}
+                  {% if routine.completada %}
+                    <span class="badge" style="font-size:0.75rem;background:#d1d5db;color:#6b7280;">Completada</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div style="color:#6b7280;font-size:0.85rem;margin-top:0.25rem;">
+                Creada: {{ routine.fecha_creacion|date:"d M Y" }}
+              </div>
             </li>
           {% endfor %}
         </ul>
-        <a href="{% url 'routine_list' %}" class="btn btn-sm">Ver todas las rutinas →</a>
       {% else %}
         <div class="empty-state">
           <div class="empty-state-icon">📝</div>
@@ -62,54 +145,25 @@
       {% endif %}
     </div>
   </div>
-
-  <!-- Progreso Reciente -->
-  <div class="col">
-    <div class="card">
-      <h3>✅ Progreso Reciente</h3>
-      {% if latest %}
-        <ul class="exercise-list">
-          {% for log in latest %}
-            <li>
-              <div class="routine-item-info">
-                <div class="routine-item-title">{{ log.routine.nombre }}</div>
-                <div class="routine-item-meta">
-                  {{ log.fecha|date:"d M Y" }} |
-                  {% if log.repeticiones %}{{ log.repeticiones }} reps{% endif %}
-                  {% if log.tiempo_seg %}{{ log.tiempo_seg }}s{% endif %} |
-                  Esfuerzo: <span class="badge badge-primary">{{ log.esfuerzo }}/10</span>
-                </div>
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-        <a href="{% url 'progress_create' %}" class="btn btn-sm btn-success">Registrar nueva sesión →</a>
-      {% else %}
-        <div class="empty-state">
-          <div class="empty-state-icon">📊</div>
-          <p>No has registrado progreso aún.</p>
-          <a href="{% url 'progress_create' %}" class="btn btn-success">Registrar Progreso</a>
-        </div>
-      {% endif %}
-    </div>
-  </div>
 </div>
 
-<!-- Acciones Rápidas -->
-<div class="card" style="background:linear-gradient(135deg, #0b74de 0%, #4a7c59 100%);color:white;margin-top:1.5rem;">
-  <h3 style="color:white;">⚡ Acciones Rápidas</h3>
-  <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
-    <a href="{% url 'routine_create' %}" class="btn" style="background:white;color:#0b74de;">➕ Nueva Rutina</a>
-    <a href="{% url 'exercise_create' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;">💪 Crear Ejercicio</a>
-    <a href="{% url 'progress_create' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;">✅ Registrar Progreso</a>
-    <a href="{% url 'report_adherence' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;">📊 Ver Informes</a>
+<!-- Atajos / Acciones Rápidas -->
+<div class="card" style="background:linear-gradient(135deg, #0b74de 0%, #4a7c59 100%);color:white;margin-bottom:1.5rem;">
+  <h3 style="color:white;margin-bottom:1rem;">⚡ Acciones Rápidas</h3>
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+    <a href="{% url 'routine_create' %}" class="btn" style="background:white;color:#0b74de;font-weight:500;">➕ Crear Nueva Rutina</a>
+    <a href="{% url 'progress_create' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">✅ Registrar Progreso</a>
+    <a href="{% url 'report_progress_trend' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">📊 Ver Informes</a>
+    <a href="{% url 'exercises_list' %}" class="btn" style="background:rgba(255,255,255,0.2);border:2px solid white;color:white;font-weight:500;">💪 Explorar Ejercicios</a>
   </div>
 </div>
 
 <!-- Recomendaciones no leídas -->
 {% if unread_recommendations > 0 %}
-<div class="card" style="background:#fef3c7;border-color:#fde68a;margin-top:1.5rem;">
-  <h3 style="color:#92400e;">💬 Tienes {{ unread_recommendations }} recomendación{{ unread_recommendations|pluralize:"es" }} nueva{{ unread_recommendations|pluralize }}</h3>
+<div class="card" style="background:#fef3c7;border:2px solid #fde68a;margin-bottom:1.5rem;">
+  <h3 style="color:#92400e;margin-bottom:0.5rem;">
+    💬 Tienes {{ unread_recommendations }} recomendación{{ unread_recommendations|pluralize:"es" }} nueva{{ unread_recommendations|pluralize }}
+  </h3>
   <p style="color:#78350f;margin-bottom:1rem;">
     Tu entrenador te ha enviado recomendaciones. ¡Revísalas para mejorar tu rendimiento!
   </p>

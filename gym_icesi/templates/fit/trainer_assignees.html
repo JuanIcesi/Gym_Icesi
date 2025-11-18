@@ -2,58 +2,102 @@
 {% block title %}Mis Asignados - Gym Icesi{% endblock %}
 
 {% block content %}
-<div class="card">
-  <h2>🏋️ Mis Usuarios Asignados</h2>
-  <p class="muted">Usuarios que están bajo tu supervisión. Haz clic en un usuario para ver su progreso y dar recomendaciones.</p>
+<div style="margin-bottom:2rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+    <div>
+      <h1 style="margin:0;">👥 Mis Usuarios Asignados</h1>
+      <p style="color:#6b7280;margin:0.5rem 0 0 0;">Usuarios que están bajo tu supervisión. Haz clic en un usuario para ver su progreso y dar recomendaciones.</p>
+    </div>
+    <a href="{% url 'home' %}" class="btn btn-secondary">← Volver al Dashboard</a>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <form method="get" style="display:grid;grid-template-columns:2fr 1fr auto;gap:1rem;align-items:end;">
+      <div>
+        <label for="q" style="display:block;margin-bottom:0.5rem;font-weight:500;">🔍 Buscar por nombre:</label>
+        <input type="text" name="q" id="q" value="{{ search_query }}" placeholder="Nombre de usuario..." style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+      </div>
+      <div>
+        <label for="actividad" style="display:block;margin-bottom:0.5rem;font-weight:500;">📊 Nivel de actividad:</label>
+        <select name="actividad" id="actividad" style="width:100%;padding:0.75rem;border:1px solid #d1d5db;border-radius:6px;">
+          <option value="">Todos</option>
+          <option value="alto" {% if actividad_filter == "alto" %}selected{% endif %}>Alto</option>
+          <option value="medio" {% if actividad_filter == "medio" %}selected{% endif %}>Medio</option>
+          <option value="bajo" {% if actividad_filter == "bajo" %}selected{% endif %}>Bajo/Sin actividad</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn">Filtrar</button>
+        {% if search_query or actividad_filter %}
+          <a href="{% url 'trainer_assignees' %}" class="btn btn-secondary" style="display:block;margin-top:0.5rem;">Limpiar</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
   
   {% if asignados %}
-    <table class="table" style="margin-top:1.5rem;">
-      <thead>
-        <tr>
-          <th>Usuario</th>
-          <th>Fecha de Asignación</th>
-          <th>Rutinas</th>
-          <th>Último Progreso</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for asignado in asignados %}
-          <tr>
-            <td>
-              <strong>{{ asignado.user.username }}</strong>
-              {% if asignado.user.first_name or asignado.user.last_name %}
-                <br>
-                <small class="muted">{{ asignado.user.first_name }} {{ asignado.user.last_name }}</small>
-              {% endif %}
-            </td>
-            <td>{{ asignado.fecha_asignacion|date:"d/m/Y" }}</td>
-            <td>
-              {{ asignado.user.routines.count }} rutina{{ asignado.user.routines.count|pluralize }}
-            </td>
-            <td>
-              {% if asignado.last_progress_date %}
-                {{ asignado.last_progress_date|date:"d/m/Y" }}
-              {% else %}
-                <span class="muted">Sin registros</span>
-              {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'trainer_feedback' asignado.user.id %}" class="btn btn-sm btn-primary">
-                Ver Progreso
-              </a>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(350px, 1fr));gap:1.5rem;">
+      {% for item in asignados %}
+        {% with asignado=item.assignment %}
+        <div class="card" style="padding:1.5rem;border:1px solid #e5e7eb;transition:all 0.3s;" onmouseover="this.style.borderColor='#0b74de';this.style.boxShadow='0 4px 12px rgba(11,116,222,0.15)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem;">
+            <div style="flex:1;">
+              <h3 style="margin:0 0 0.5rem 0;color:#111827;">
+                {{ item.user_info.first_name|default:"" }} {{ item.user_info.last_name|default:asignado.user.username }}
+              </h3>
+              <div style="color:#6b7280;font-size:0.9rem;">
+                {% if item.user_info.campus %}
+                  📍 {{ item.user_info.campus }}
+                {% endif %}
+                {% if item.user_info.role == 'STUDENT' %}
+                  | 🎓 Estudiante
+                {% endif %}
+              </div>
+            </div>
+            <span class="badge" style="background:{% if item.nivel_actividad == 'Alto' %}#d1fae5{% elif item.nivel_actividad == 'Medio' %}#fef3c7{% else %}#fee2e2{% endif %};color:{% if item.nivel_actividad == 'Alto' %}#065f46{% elif item.nivel_actividad == 'Medio' %}#92400e{% else %}#991b1b{% endif %};font-size:0.75rem;">
+              {{ item.nivel_actividad }}
+            </span>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;padding:1rem;background:#f9fafb;border-radius:8px;">
+            <div>
+              <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Rutinas Activas</div>
+              <div style="font-size:1.5rem;font-weight:bold;color:#111827;">{{ item.rutinas_activas }}</div>
+            </div>
+            <div>
+              <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.25rem;">Sesiones Este Mes</div>
+              <div style="font-size:1.5rem;font-weight:bold;color:#111827;">{{ item.sesiones_mes }}</div>
+            </div>
+          </div>
+          
+          <div style="color:#6b7280;font-size:0.85rem;margin-bottom:1rem;">
+            {% if item.ultima_sesion %}
+              <div>🔥 Última sesión: {{ item.ultima_sesion.fecha|date:"d M Y" }}</div>
+            {% else %}
+              <div style="color:#9ca3af;">Sin sesiones registradas</div>
+            {% endif %}
+            <div style="margin-top:0.25rem;">📅 Asignado: {{ asignado.fecha_asignacion|date:"d M Y" }}</div>
+          </div>
+          
+          <a href="{% url 'trainer_feedback' asignado.user.id %}" class="btn" style="width:100%;">
+            Ver Detalles y Progreso →
+          </a>
+        </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
   {% else %}
     <div class="empty-state" style="margin-top:2rem;">
       <div class="empty-state-icon">👥</div>
-      <p>No tienes usuarios asignados actualmente.</p>
-      <p style="font-size:0.9rem;color:var(--muted);">
-        Los administradores pueden asignarte usuarios desde el módulo de administración.
-      </p>
+      <p>No tienes usuarios asignados{% if search_query or actividad_filter %} con estos filtros{% endif %}.</p>
+      {% if search_query or actividad_filter %}
+        <a href="{% url 'trainer_assignees' %}" class="btn">Ver Todos</a>
+      {% else %}
+        <p style="font-size:0.9rem;color:#6b7280;">
+          Los administradores pueden asignarte usuarios desde el módulo de administración.
+        </p>
+      {% endif %}
     </div>
   {% endif %}
 </div>

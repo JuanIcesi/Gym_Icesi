@@ -15,26 +15,39 @@
       <h1 class="brand">💪 Gym Icesi</h1>
       <nav class="main-nav">
         {% if user.is_authenticated %}
-          <a href="{% url 'home' %}">🏠 Dashboard</a>
-          <a href="{% url 'routine_list' %}">📋 Rutinas</a>
-          <a href="{% url 'progress_create' %}">✅ Progreso</a>
-          <a href="{% url 'recommendations_list' %}">💬 Recomendaciones</a>
-          <a href="{% url 'report_adherence' %}">📊 Reportes</a>
-
-          {# --- Sección visible para entrenadores (staff) --- #}
-          {% if user.is_staff %}
-            <a href="{% url 'trainer_assignees' %}">🏋️ Mis Asignados</a>
-            <a href="{% url 'trainer_routines' %}">📋 Mis Rutinas</a>
-            <a href="{% url 'trainer_exercises' %}">💪 Ejercicios</a>
-            <a href="{% url 'trainers_list' %}">👥 Entrenadores</a>
+          {# --- Menú para Usuario Estándar (no staff, no superuser) --- #}
+          {% if not user.is_staff and not user.is_superuser %}
+            <a href="{% url 'home' %}">🏠 Inicio</a>
+            <a href="{% url 'routine_list' %}">📋 Mis Rutinas</a>
+            <a href="{% url 'exercises_list' %}">💪 Ejercicios</a>
+            <a href="{% url 'progress_list' %}">✅ Progreso</a>
+            <a href="{% url 'report_progress' %}">📊 Informes</a>
+            {% comment %} Mostrar "Mi Entrenador" solo si tiene uno asignado {% endcomment %}
+            {% if has_trainer %}
+              <a href="{% url 'trainers_view' %}">🏋️ Mi Entrenador</a>
+            {% endif %}
           {% endif %}
 
-          {# --- Sección visible solo para superusuarios --- #}
+          {# --- Menú para Entrenador (staff pero no superuser) --- #}
+          {% if user.is_staff and not user.is_superuser %}
+            <a href="{% url 'home' %}">🏠 Inicio</a>
+            <a href="{% url 'trainer_assignees' %}">👥 Mis Usuarios</a>
+            <a href="{% url 'trainer_routines' %}">📋 Mis Rutinas Prediseñadas</a>
+            <a href="{% url 'trainer_exercises' %}">💪 Mis Ejercicios</a>
+          {% endif %}
+
+          {# --- Menú para Administrador (superuser) --- #}
           {% if user.is_superuser %}
-            <a href="{% url 'admin_assign_trainer' %}">⚙️ Admin</a>
+            <a href="{% url 'home' %}">🏠 Inicio</a>
+            <a href="{% url 'admin_assign_trainer' %}">👥 Asignaciones</a>
+            <a href="{% url 'home' %}">📊 Informes Globales</a>
           {% endif %}
 
-          <a href="{% url 'logout' %}" class="btn-ghost">Salir</a>
+          {# --- Menú común para todos los usuarios autenticados --- #}
+          <div style="margin-left:auto;display:flex;align-items:center;gap:0.75rem;">
+            <span style="color:#6b7280;font-size:0.9rem;">{{ user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn-ghost">Salir</a>
+          </div>
         {% else %}
           <a href="{% url 'login' %}" class="btn">Ingresar</a>
         {% endif %}
